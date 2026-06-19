@@ -2691,6 +2691,20 @@ body {
   .modal-body {
     overflow-y: auto;
   }
+
+  /* Auth & Dashboards */
+  .auth-page-wrapper {
+    padding: 1rem;
+  }
+  .auth-card {
+    padding: 1.5rem;
+  }
+  .dashboard-page-wrapper {
+    padding: 1rem;
+  }
+  .tickets-scroll-container {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }
 
 /* 4. Small Mobile Breakpoint (max-width: 480px) */
@@ -2746,6 +2760,22 @@ body {
   /* Empty States */
   .empty-tickets-view {
     padding: 2rem 1rem;
+  }
+
+  /* Header Overrides */
+  .session-email-text {
+    display: none !important;
+  }
+
+  /* Auth & Dashboards */
+  .auth-card {
+    padding: 1.25rem;
+  }
+  .auth-title {
+    font-size: 1.5rem;
+  }
+  .tickets-scroll-container {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2874,4 +2904,155 @@ body {
   flex-direction: column;
   height: 100%;
 }
+
+/* ==========================================================================
+   Admin Dashboard Layouts
+   ========================================================================== */
+.admin-main-content {
+  width: 100%;
+  max-width: 1400px;
+}
+
+.admin-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-title-section h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 0.25rem 0;
+}
+
+.admin-title-section p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.admin-stats-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-stat-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  flex: 1;
+  min-width: 150px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-stat-box .stat-num {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  line-height: 1.2;
+}
+
+.admin-stat-box .stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* Manage Events */
+.events-grid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.event-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-input);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  min-width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-main);
+}
+
+.event-card-detail {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.event-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+}
+
+/* 2-Column Grid */
+.admin-grid-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.admin-panel-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.admin-panel-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: var(--text-main);
+}
+
+.admin-manual-checkin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-label-small {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .admin-grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 

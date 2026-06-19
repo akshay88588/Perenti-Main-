@@ -150,9 +150,17 @@ export default function CreateEventPage() {
       let finalBannerUrl = formData.bannerUrl;
 
       if (bannerFile) {
-        const storageRef = ref(storage, 'event-banners/' + Date.now() + '_' + bannerFile.name.replace(/[^a-zA-Z0-9.]/g, ''));
-        const snapshot = await uploadBytes(storageRef, bannerFile);
-        finalBannerUrl = await getDownloadURL(snapshot.ref);
+        try {
+          const storageRef = ref(storage, 'event-banners/' + Date.now() + '_' + bannerFile.name.replace(/[^a-zA-Z0-9.]/g, ''));
+          const snapshot = await uploadBytes(storageRef, bannerFile);
+          finalBannerUrl = await getDownloadURL(snapshot.ref);
+        } catch (uploadErr) {
+          console.warn("Banner upload failed (likely CORS or permission issue). Proceeding without new image.", uploadErr);
+          // Fallback to existing or empty if upload fails
+          if (!formData.bannerUrl && originalBannerUrl) {
+            finalBannerUrl = originalBannerUrl;
+          }
+        }
       } else if (!formData.bannerUrl && originalBannerUrl) {
         finalBannerUrl = originalBannerUrl;
       }
