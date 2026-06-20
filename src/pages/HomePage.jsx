@@ -13,6 +13,55 @@ import DigitalTicketModal from '../components/modals/DigitalTicketModal';
 import EmailPreviewModal from '../components/modals/EmailPreviewModal';
 import Toast from '../components/Toast';
 import { handleShareAction } from '../utils/shareActions';
+import AttendeeProfileModal from '../components/modals/AttendeeProfileModal';
+import { collection, getDocs, query } from 'firebase/firestore';
+import { db } from '../config/firebase';
+
+const MOCK_ATTENDEES = [
+  {
+    id: 'PRNT-EBC28-XYZ12-1',
+    email: 'john.doe@gmail.com',
+    status: 'checked-in',
+    answers: {
+      'What are you building?': 'A modern project management tool for builders.',
+      'Tell us about yourself': 'Frontend engineer passionate about design systems, React, and building clean interfaces.',
+      'Role': 'Founder',
+      'Industry': 'Technology',
+      'LinkedIn URL (Optional)': 'https://linkedin.com/in/johndoe',
+      'Instagram URL (Optional)': 'https://instagram.com/johndoe',
+      'Personal Website (Optional)': 'https://johndoe.dev',
+      'Looking for Co-founder?': 'Yes'
+    }
+  },
+  {
+    id: 'PRNT-EBC28-ABC34-2',
+    email: 'sarah.smith@yahoo.com',
+    status: 'registered',
+    answers: {
+      'What are you building?': 'Next-gen analytics platform for small businesses.',
+      'Tell us about yourself': 'Data scientist and educator. Love turning raw numbers into actionable business insights.',
+      'Role': 'Professional',
+      'Industry': 'Finance',
+      'LinkedIn URL (Optional)': 'https://linkedin.com/in/sarahsmith',
+      'Personal Website (Optional)': 'https://sarahanalytics.com',
+      'Looking for Co-founder?': 'No'
+    }
+  },
+  {
+    id: 'PRNT-EBC28-LMN56-3',
+    email: 'rohit.sharma@startup.io',
+    status: 'checked-in',
+    answers: {
+      'What are you building?': 'Fintech mobile app for micro-investments in India.',
+      'Tell us about yourself': 'Builder, developer, and early-stage startup enthusiast. Always looking for co-founders and early testers.',
+      'Role': 'Founder',
+      'Industry': 'Technology',
+      'LinkedIn URL (Optional)': 'https://linkedin.com/in/rohitsharma',
+      'Instagram URL (Optional)': 'https://instagram.com/rohitsharma',
+      'Looking for Co-founder?': 'Yes'
+    }
+  }
+];
 
 export default function HomePage() {
   const [qty, setQty] = useState(1);
@@ -32,24 +81,30 @@ export default function HomePage() {
   
   const [generatedTicketIds, setGeneratedTicketIds] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
-  const [attendees, setAttendees] = useState([]);
+  const [selectedAttendee, setSelectedAttendee] = useState(null);
+  const [attendees, setAttendees] = useState(MOCK_ATTENDEES);
 
   useEffect(() => {
-    async function fetchAttendees() {
+    async function loadAttendees() {
       try {
-        const { collection, getDocs } = await import('firebase/firestore');
-        const { db } = await import('../config/firebase');
-        const ticketsSnap = await getDocs(collection(db, 'tickets'));
-        const ticketsList = [];
-        ticketsSnap.forEach(doc => {
-          ticketsList.push({ id: doc.id, ...doc.data() });
+        const ticketsCol = collection(db, 'tickets');
+        const q = query(ticketsCol);
+        const querySnapshot = await getDocs(q);
+        const list = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.approval !== 'rejected') {
+            list.push({ id: doc.id, ...data });
+          }
         });
-        setAttendees(ticketsList);
+        if (list.length > 0) {
+          setAttendees(list);
+        }
       } catch (err) {
-        console.warn("Could not fetch attendees:", err);
+        console.warn("Using fallback mock attendees due to load error:", err);
       }
     }
-    fetchAttendees();
+    loadAttendees();
   }, []);
 
   const TICKET_PRICE = 399;
@@ -206,38 +261,37 @@ export default function HomePage() {
           </div>
           
           <div className="event-attendees-col">
-            <div className="attendees-header-row">
+            {/* Attendees list */}
+            <div className="attendees-header-row" style={{ marginTop: '2rem' }}>
               <h3 className="attendees-title">Attendees</h3>
               <span className="attendees-count-badge">{attendees.length}</span>
             </div>
             <div className="attendees-list-scrollable">
-              {attendees.length === 0 ? (
-                <div style={{textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '2rem'}}>
-                  No attendees registered yet.
-                </div>
-              ) : (
-                attendees.map(attendee => {
-                  // Fallback for name if not provided
-                  const name = attendee.answers?.name || attendee.name || attendee.email.split('@')[0];
-                  // Generate a deterministic color based on the email
-                  const hash = attendee.email.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-                  const hue = Math.abs(hash % 360);
-                  const isCheckedIn = attendee.status === 'checked-in';
-                  
-                  return (
-                    <div key={attendee.id} className="attendee-item-row">
-                      <div className="attendee-avatar" style={{backgroundColor: `hsl(${hue}, 70%, 85%)`, color: `hsl(${hue}, 70%, 30%)`}}>
-                        {name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="attendee-info-block">
-                        <span className="attendee-display-name">{name}</span>
-                        <span className="attendee-email-sub">{attendee.email}</span>
-                      </div>
-                      <div className={`attendee-status-indicator ${isCheckedIn ? 'checked-in' : 'registered'}`} title={isCheckedIn ? 'Checked In' : 'Registered'}></div>
+<<<<<<< HEAD
+              {attendees.map((attendee) => {
+                const email = attendee.email || '';
+                const name = email ? email.split('@')[0].split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Attendee';
+                const initial = name.charAt(0).toUpperCase();
+                return (
+                  <button 
+                    key={attendee.id} 
+                    className="attendee-item-row"
+                    onClick={() => setSelectedAttendee(attendee)}
+                    style={{ border: '1px solid var(--divider)' }}
+                  >
+                    <div className="attendee-avatar">
+                      {initial}
                     </div>
-                  );
-                })
-              )}
+                    <div className="attendee-info-block">
+                      <span className="attendee-display-name">{name}</span>
+                      <span className="attendee-email-sub">{email}</span>
+                    </div>
+                    <span className={`attendee-status-indicator ${attendee.status === 'checked-in' ? 'checked-in' : 'registered'}`}>
+                      {attendee.status === 'checked-in' ? 'Checked In' : 'Registered'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -253,6 +307,11 @@ export default function HomePage() {
       <RegistrationSummaryModal show={showSummary} onClose={handleSummaryClose} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} />
       <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/user-dashboard'); }} ticketIds={generatedTicketIds} email={session?.email} />
       
+      <AttendeeProfileModal 
+        show={selectedAttendee !== null} 
+        onClose={() => setSelectedAttendee(null)} 
+        attendee={selectedAttendee} 
+      />
       <Toast message={toastMessage} onClose={() => setToastMessage('')} />
     </main>
   );
