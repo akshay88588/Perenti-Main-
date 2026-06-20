@@ -267,7 +267,6 @@ export default function HomePage() {
               <span className="attendees-count-badge">{attendees.length}</span>
             </div>
             <div className="attendees-list-scrollable">
-<<<<<<< HEAD
               {attendees.map((attendee) => {
                 const email = attendee.email || '';
                 const name = email ? email.split('@')[0].split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Attendee';
