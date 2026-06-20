@@ -2705,6 +2705,32 @@ body {
   .tickets-scroll-container {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
+  
+  /* Admin Dashboard Mobile */
+  .admin-panel-box {
+    padding: 1.25rem;
+  }
+  .admin-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-filter-row > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .view-tabs {
+    width: 100%;
+    margin-left: 0 !important;
+    flex-direction: column;
+  }
+  .view-tabs button {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* 4. Small Mobile Breakpoint (max-width: 480px) */
@@ -2776,6 +2802,21 @@ body {
   }
   .tickets-scroll-container {
     grid-template-columns: 1fr;
+  }
+
+  /* Admin Dashboard Small Mobile */
+  .admin-stats-row {
+    gap: 0.5rem;
+  }
+  .admin-stat-box {
+    min-width: 45%;
+    padding: 1rem;
+  }
+  .admin-stat-box .stat-num {
+    font-size: 1.4rem;
+  }
+  .admin-panel-box {
+    padding: 1rem;
   }
 }
 
