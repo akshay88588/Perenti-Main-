@@ -44,7 +44,7 @@ export default function UserDashboard() {
         const querySnapshot = await getDocs(q);
         const ticketsList = [];
         querySnapshot.forEach((docSnap) => {
-          ticketsList.push(docSnap.data());
+          ticketsList.push({ id: docSnap.id, ...docSnap.data() });
         });
         setTickets(ticketsList);
       } catch (error) {
@@ -63,7 +63,7 @@ export default function UserDashboard() {
         const querySnapshot = await getDocs(q);
         const ticketsList = [];
         querySnapshot.forEach((docSnap) => {
-          ticketsList.push(docSnap.data());
+          ticketsList.push({ id: docSnap.id, ...docSnap.data() });
         });
         setTickets(ticketsList);
       } catch(e) {

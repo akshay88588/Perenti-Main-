@@ -2705,6 +2705,33 @@ body {
   .tickets-scroll-container {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
+  
+  /* Admin Dashboard Mobile */
+  .admin-panel-box {
+    padding: 1.25rem;
+  }
+  .admin-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-filter-row > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .view-tabs {
+    width: 100%;
+    margin-left: 0 !important;
+    flex-direction: column;
+  }
+  .view-tabs button {
+    width: 100%;
+    text-align: center;
+    white-space: normal;
+  }
 }
 
 /* 4. Small Mobile Breakpoint (max-width: 480px) */
@@ -2776,6 +2803,21 @@ body {
   }
   .tickets-scroll-container {
     grid-template-columns: 1fr;
+  }
+
+  /* Admin Dashboard Small Mobile */
+  .admin-stats-row {
+    gap: 0.5rem;
+  }
+  .admin-stat-box {
+    min-width: 45%;
+    padding: 1rem;
+  }
+  .admin-stat-box .stat-num {
+    font-size: 1.4rem;
+  }
+  .admin-panel-box {
+    padding: 1rem;
   }
 }
 
@@ -2866,6 +2908,7 @@ body {
 .dashboard-main-content {
   width: 100%;
   max-width: 1100px;
+  min-width: 0; /* Prevent flex blowout */
 }
 
 .hub-header-row {
@@ -2911,6 +2954,7 @@ body {
 .admin-main-content {
   width: 100%;
   max-width: 1400px;
+  min-width: 0; /* Prevent flex blowout */
 }
 
 .admin-header-row {
@@ -3020,6 +3064,10 @@ body {
   align-items: start;
 }
 
+.admin-grid-layout > * {
+  min-width: 0; /* Fixes grid blowout when content like tables are too wide */
+}
+
 .admin-panel-box {
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -3027,6 +3075,7 @@ body {
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   margin-bottom: 1.5rem;
+  word-break: break-word; /* Handle long text without spaces */
 }
 
 .admin-panel-title {
