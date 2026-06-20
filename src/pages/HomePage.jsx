@@ -32,6 +32,25 @@ export default function HomePage() {
   
   const [generatedTicketIds, setGeneratedTicketIds] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
+  const [attendees, setAttendees] = useState([]);
+
+  useEffect(() => {
+    async function fetchAttendees() {
+      try {
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('../config/firebase');
+        const ticketsSnap = await getDocs(collection(db, 'tickets'));
+        const ticketsList = [];
+        ticketsSnap.forEach(doc => {
+          ticketsList.push({ id: doc.id, ...doc.data() });
+        });
+        setAttendees(ticketsList);
+      } catch (err) {
+        console.warn("Could not fetch attendees:", err);
+      }
+    }
+    fetchAttendees();
+  }, []);
 
   const TICKET_PRICE = 399;
 
@@ -187,22 +206,38 @@ export default function HomePage() {
           </div>
           
           <div className="event-attendees-col">
-            <div className="goavo-ticket-card">
-              <div className="ticket-left-band">
-                <span className="vertical-paid-text">PAID</span>
-              </div>
-              <div className="ticket-center-content">
-                <span className="ticket-status-badge" id="ticket-available-badge">{ticketsRemaining} left</span>
-                <h3 className="ticket-title-name">Meetup Pass</h3>
-                <p className="ticket-subtext-info">Includes entry, networking access, and english breakfast.</p>
-                <div className="ticket-deadline-row">
-                  <svg className="meta-clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  <span>Sales end on June 13th</span>
+            <div className="attendees-header-row">
+              <h3 className="attendees-title">Attendees</h3>
+              <span className="attendees-count-badge">{attendees.length}</span>
+            </div>
+            <div className="attendees-list-scrollable">
+              {attendees.length === 0 ? (
+                <div style={{textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '2rem'}}>
+                  No attendees registered yet.
                 </div>
-                <div className="ticket-price-display">
-                  <span className="price-val">₹{TICKET_PRICE.toFixed(2)}</span>
-                </div>
-              </div>
+              ) : (
+                attendees.map(attendee => {
+                  // Fallback for name if not provided
+                  const name = attendee.answers?.name || attendee.name || attendee.email.split('@')[0];
+                  // Generate a deterministic color based on the email
+                  const hash = attendee.email.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+                  const hue = Math.abs(hash % 360);
+                  const isCheckedIn = attendee.status === 'checked-in';
+                  
+                  return (
+                    <div key={attendee.id} className="attendee-item-row">
+                      <div className="attendee-avatar" style={{backgroundColor: `hsl(${hue}, 70%, 85%)`, color: `hsl(${hue}, 70%, 30%)`}}>
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="attendee-info-block">
+                        <span className="attendee-display-name">{name}</span>
+                        <span className="attendee-email-sub">{attendee.email}</span>
+                      </div>
+                      <div className={`attendee-status-indicator ${isCheckedIn ? 'checked-in' : 'registered'}`} title={isCheckedIn ? 'Checked In' : 'Registered'}></div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
