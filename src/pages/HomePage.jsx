@@ -13,6 +13,55 @@ import DigitalTicketModal from '../components/modals/DigitalTicketModal';
 import EmailPreviewModal from '../components/modals/EmailPreviewModal';
 import Toast from '../components/Toast';
 import { handleShareAction } from '../utils/shareActions';
+import AttendeeProfileModal from '../components/modals/AttendeeProfileModal';
+import { collection, getDocs, query } from 'firebase/firestore';
+import { db } from '../config/firebase';
+
+const MOCK_ATTENDEES = [
+  {
+    id: 'PRNT-EBC28-XYZ12-1',
+    email: 'john.doe@gmail.com',
+    status: 'checked-in',
+    answers: {
+      'What are you building?': 'A modern project management tool for builders.',
+      'Tell us about yourself': 'Frontend engineer passionate about design systems, React, and building clean interfaces.',
+      'Role': 'Founder',
+      'Industry': 'Technology',
+      'LinkedIn URL (Optional)': 'https://linkedin.com/in/johndoe',
+      'Instagram URL (Optional)': 'https://instagram.com/johndoe',
+      'Personal Website (Optional)': 'https://johndoe.dev',
+      'Looking for Co-founder?': 'Yes'
+    }
+  },
+  {
+    id: 'PRNT-EBC28-ABC34-2',
+    email: 'sarah.smith@yahoo.com',
+    status: 'registered',
+    answers: {
+      'What are you building?': 'Next-gen analytics platform for small businesses.',
+      'Tell us about yourself': 'Data scientist and educator. Love turning raw numbers into actionable business insights.',
+      'Role': 'Professional',
+      'Industry': 'Finance',
+      'LinkedIn URL (Optional)': 'https://linkedin.com/in/sarahsmith',
+      'Personal Website (Optional)': 'https://sarahanalytics.com',
+      'Looking for Co-founder?': 'No'
+    }
+  },
+  {
+    id: 'PRNT-EBC28-LMN56-3',
+    email: 'rohit.sharma@startup.io',
+    status: 'checked-in',
+    answers: {
+      'What are you building?': 'Fintech mobile app for micro-investments in India.',
+      'Tell us about yourself': 'Builder, developer, and early-stage startup enthusiast. Always looking for co-founders and early testers.',
+      'Role': 'Founder',
+      'Industry': 'Technology',
+      'LinkedIn URL (Optional)': 'https://linkedin.com/in/rohitsharma',
+      'Instagram URL (Optional)': 'https://instagram.com/rohitsharma',
+      'Looking for Co-founder?': 'Yes'
+    }
+  }
+];
 
 export default function HomePage() {
   const [qty, setQty] = useState(1);
@@ -32,6 +81,31 @@ export default function HomePage() {
   
   const [generatedTicketIds, setGeneratedTicketIds] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
+  const [selectedAttendee, setSelectedAttendee] = useState(null);
+  const [attendees, setAttendees] = useState(MOCK_ATTENDEES);
+
+  useEffect(() => {
+    async function loadAttendees() {
+      try {
+        const ticketsCol = collection(db, 'tickets');
+        const q = query(ticketsCol);
+        const querySnapshot = await getDocs(q);
+        const list = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.approval !== 'rejected') {
+            list.push({ id: doc.id, ...data });
+          }
+        });
+        if (list.length > 0) {
+          setAttendees(list);
+        }
+      } catch (err) {
+        console.warn("Using fallback mock attendees due to load error:", err);
+      }
+    }
+    loadAttendees();
+  }, []);
 
   const TICKET_PRICE = 399;
 
@@ -187,22 +261,36 @@ export default function HomePage() {
           </div>
           
           <div className="event-attendees-col">
-            <div className="goavo-ticket-card">
-              <div className="ticket-left-band">
-                <span className="vertical-paid-text">PAID</span>
-              </div>
-              <div className="ticket-center-content">
-                <span className="ticket-status-badge" id="ticket-available-badge">{ticketsRemaining} left</span>
-                <h3 className="ticket-title-name">Meetup Pass</h3>
-                <p className="ticket-subtext-info">Includes entry, networking access, and english breakfast.</p>
-                <div className="ticket-deadline-row">
-                  <svg className="meta-clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  <span>Sales end on June 13th</span>
-                </div>
-                <div className="ticket-price-display">
-                  <span className="price-val">₹{TICKET_PRICE.toFixed(2)}</span>
-                </div>
-              </div>
+            {/* Attendees list */}
+            <div className="attendees-header-row" style={{ marginTop: '2rem' }}>
+              <h3 className="attendees-title">Attendees</h3>
+              <span className="attendees-count-badge">{attendees.length}</span>
+            </div>
+            <div className="attendees-list-scrollable">
+              {attendees.map((attendee) => {
+                const email = attendee.email || '';
+                const name = email ? email.split('@')[0].split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Attendee';
+                const initial = name.charAt(0).toUpperCase();
+                return (
+                  <button 
+                    key={attendee.id} 
+                    className="attendee-item-row"
+                    onClick={() => setSelectedAttendee(attendee)}
+                    style={{ border: '1px solid var(--divider)' }}
+                  >
+                    <div className="attendee-avatar">
+                      {initial}
+                    </div>
+                    <div className="attendee-info-block">
+                      <span className="attendee-display-name">{name}</span>
+                      <span className="attendee-email-sub">{email}</span>
+                    </div>
+                    <span className={`attendee-status-indicator ${attendee.status === 'checked-in' ? 'checked-in' : 'registered'}`}>
+                      {attendee.status === 'checked-in' ? 'Checked In' : 'Registered'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -218,6 +306,11 @@ export default function HomePage() {
       <RegistrationSummaryModal show={showSummary} onClose={handleSummaryClose} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} />
       <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/user-dashboard'); }} ticketIds={generatedTicketIds} email={session?.email} />
       
+      <AttendeeProfileModal 
+        show={selectedAttendee !== null} 
+        onClose={() => setSelectedAttendee(null)} 
+        attendee={selectedAttendee} 
+      />
       <Toast message={toastMessage} onClose={() => setToastMessage('')} />
     </main>
   );
