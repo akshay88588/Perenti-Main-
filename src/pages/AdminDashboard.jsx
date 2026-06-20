@@ -455,7 +455,9 @@ export default function AdminDashboard() {
           <div className="events-grid" style={{marginTop: 0}}>
             {events.length === 0 ? (
               <div className="event-card">
-                <div style={{width: '100%', height: '140px', borderRadius: '0.5rem', overflow: 'hidden', marginBottom: '0.25rem'}}><img src="/ebc_meetup_banner.jpg" style={{width: '100%', height: '100%', objectFit: 'cover'}} alt="Event Banner"/></div>
+                <div className="event-card-banner">
+                  <img src="/ebc_meetup_banner.jpg" alt="Event Banner" />
+                </div>
                 <h4 className="event-card-title">Ebc 28th Meetup (Default)</h4>
                 <div className="event-card-detail">14/06/2026</div>
                 <div className="event-card-detail">Capacity: 60</div>
@@ -467,7 +469,13 @@ export default function AdminDashboard() {
             ) : (
               events.map(evt => (
                 <div className="event-card" key={evt.id}>
-                  {evt.bannerUrl && <div style={{width: '100%', height: '140px', borderRadius: '0.5rem', overflow: 'hidden', marginBottom: '0.25rem'}}><img src={evt.bannerUrl} style={{width: '100%', height: '100%', objectFit: 'cover'}} alt="Event Banner"/></div>}
+                  {evt.bannerUrl ? (
+                    <div className="event-card-banner">
+                      <img src={evt.bannerUrl} alt="Event Banner" />
+                    </div>
+                  ) : (
+                    <div className="event-card-banner-placeholder">No Image</div>
+                  )}
                   <h4 className="event-card-title">{evt.name || 'Untitled Event'}</h4>
                   <div className="event-card-detail">{evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}</div>
                   <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited'}</div>
