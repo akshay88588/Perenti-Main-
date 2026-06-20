@@ -3056,3 +3056,65 @@ body {
 }
 
 
+/* ==========================================================================
+   QR Scanner Mobile Overflow Fix
+   Constrains the scanner viewfinder so it never overflows the screen or
+   causes horizontal scroll on mobile devices.
+   Only affects scanner-related elements; nothing else is changed.
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Ensure the panel containing the scanner cannot exceed viewport width */
+  .admin-panel-box {
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  /* Constrain the viewfinder box itself */
+  .scanner-viewfinder {
+    width: 100% !important;
+    max-width: 100% !important;
+    /* Cap height so it never takes over the full screen on portrait mobile */
+    max-height: 60vw;
+    height: auto;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Prevent the live <video> feed from expanding beyond its container */
+  .scanner-viewfinder video {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Hide the off-screen processing canvas so it never affects layout */
+  .scanner-viewfinder canvas {
+    display: none !important;
+  }
+
+  /* Keep the left column (scanner col) from pushing content out */
+  #admin-left-col {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  /* Preserve vertical scrolling on the dashboard while blocking horizontal scroll */
+  .dashboard-page-wrapper {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+/* Tighter cap for very small screens (e.g. 375px wide phones) */
+@media (max-width: 480px) {
+  .scanner-viewfinder {
+    max-height: 56vw;
+  }
+}
+
