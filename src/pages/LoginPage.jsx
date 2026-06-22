@@ -21,6 +21,8 @@ export default function LoginPage() {
   const urlParams = new URLSearchParams(location.search);
   const redirectQty = urlParams.get('qty');
   const redirectUrl = urlParams.get('redirect');
+  const eventId = urlParams.get('eventId');
+  const eventName = urlParams.get('eventName');
 
   const handleSuccessfulLogin = async (userEmail) => {
     let role = 'user';
@@ -46,7 +48,7 @@ export default function LoginPage() {
       navigate('/admin-dashboard');
     } else {
       if (redirectQty && parseInt(redirectQty) > 0) {
-        await bookTicketsForUser(userEmail, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining);
+        await bookTicketsForUser(userEmail, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, {}, eventId, eventName);
         navigate('/user-dashboard');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;

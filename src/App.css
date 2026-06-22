@@ -3212,3 +3212,64 @@ body {
   }
 }
 
+/* ==========================================================================
+   Action Buttons — RSVP & Registration Table
+   ========================================================================== */
+.btn-action-checkin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #ffffff;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.btn-action-checkin:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-action-checkin:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Reject variant — consistent size, outlined red style */
+.btn-action-reject {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  border-radius: 0.375rem;
+  border: 1px solid #ef4444;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #ef4444;
+  background: transparent;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.btn-action-reject:hover {
+  background: rgba(239, 68, 68, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.15);
+}
+
+.btn-action-reject:active {
+  transform: translateY(0);
+}

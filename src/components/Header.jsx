@@ -30,7 +30,7 @@ export default function Header() {
           {session && isUser && (
             <>
               <span className="session-email-text" id="session-email-display" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session.email}</span>
-              <Link to="/user-dashboard" className="btn btn-secondary btn-sm" id="btn-header-my-tickets">My Tickets</Link>
+              <Link to="/my-tickets" className="btn btn-secondary btn-sm" id="btn-header-my-tickets">My Tickets</Link>
               <button type="button" className="btn btn-outline btn-sm" id="btn-header-logout" onClick={handleLogout}>Logout</button>
             </>
           )}

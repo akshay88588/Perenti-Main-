@@ -1,6 +1,6 @@
-export function handleShareAction(action, showToast) {
+export function handleShareAction(action, showToast, eventName = '') {
   const shareUrl = window.location.href;
-  const shareText = "Check out the Ebc 28th Meetup on Perenti! Join other founders & builders:";
+  const shareText = `Check out ${eventName || 'this event'} on Perenti! Join other founders & builders:`;
 
   switch (action) {
     case 'copy':

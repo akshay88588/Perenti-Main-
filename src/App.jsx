@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import HomePage from './pages/HomePage';
@@ -29,26 +28,32 @@ function App() {
 
   return (
     <>
-      {/* We only show the header inside the App layout, but we need to conditionally
-          hide it on some pages if needed. Currently, all pages have the header. */}
       <Header />
       <Routes>
+        {/* Homepage: events list OR event detail (via ?eventId=) */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        
+
+        {/* My Tickets — only shows user's booked tickets */}
+        <Route path="/my-tickets" element={
+          <ProtectedRoute requiredRole="user">
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
+        {/* Legacy alias */}
         <Route path="/user-dashboard" element={
           <ProtectedRoute requiredRole="user">
             <UserDashboard />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/admin-dashboard" element={
           <ProtectedRoute requiredRole="admin">
             <AdminDashboard />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/create-event" element={
           <ProtectedRoute requiredRole="admin">
             <CreateEventPage />

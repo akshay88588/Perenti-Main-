@@ -539,12 +539,26 @@ export default function AdminDashboard() {
             </div>
 
             <div className="admin-panel-box">
-              <h3 className="admin-panel-title">Send Announcement</h3>
-              <p className="panel-section-subtitle" style={{margin: 0}}>Post an announcement that will be displayed live on the Attendee Tickets Hub.</p>
-              <div className="form-group" style={{margin: 0}}>
-                <textarea className="form-control" placeholder="Write announcement here..." value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{width: '100%', minHeight: '80px', fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--border-input)', resize: 'vertical'}}></textarea>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem'}}>
+                <div style={{width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(90,154,142,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
+                </div>
+                <h3 className="admin-panel-title" style={{margin: 0}}>Send Announcement</h3>
               </div>
-              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement}>Broadcast Announcement</button>
+              <p className="panel-section-subtitle" style={{marginBottom: '1.25rem'}}>Post a message that will be displayed live on the Attendee Tickets Hub.</p>
+              <div style={{marginBottom: '1rem'}}>
+                <textarea
+                  className="form-control"
+                  placeholder="Write your announcement here..."
+                  value={announcement}
+                  onChange={e => setAnnouncement(e.target.value)}
+                  style={{width: '100%', minHeight: '100px', fontFamily: 'inherit', fontSize: '0.875rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-input)', resize: 'vertical', lineHeight: 1.6, color: 'var(--text-main)', background: 'var(--bg-input)'}}
+                />
+                <p style={{fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.35rem', textAlign: 'right'}}>{announcement.length} characters</p>
+              </div>
+              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement} style={{width: '100%'}}>
+                📢 Broadcast Announcement
+              </button>
             </div>
 
             <div className="admin-panel-box">
@@ -615,10 +629,10 @@ export default function AdminDashboard() {
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
-              <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg-info-card)', border: '1px solid var(--border-card)', color: 'var(--text-main)'}} onClick={() => exportCSV(filteredTickets, 'ebc_registrations_filtered.csv')}>
+              <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg-info-card)', border: '1px solid var(--border-card)', color: 'var(--text-main)'}} onClick={() => exportCSV(filteredTickets, 'registrations_filtered.csv')}>
                 📥 Export Filtered CSV
               </button>
-              <button type="button" className="btn btn-primary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', color: '#ffffff'}} onClick={() => exportCSV(tickets.filter(t => t.status === 'checked-in'), 'ebc_post_event_attendees.csv')}>
+              <button type="button" className="btn btn-primary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', color: '#ffffff'}} onClick={() => exportCSV(tickets.filter(t => t.status === 'checked-in'), 'post_event_attendees.csv')}>
                 📥 Export Checked-In
               </button>
             </div>
@@ -630,7 +644,7 @@ export default function AdminDashboard() {
                     <th style={{padding: '0.75rem 1rem'}}>Ticket ID</th>
                     <th style={{padding: '0.75rem 1rem'}}>Status</th>
                     <th style={{padding: '0.75rem 1rem'}}>Approval</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Action</th>
+                    <th style={{padding: '0.75rem 1rem', textAlign: 'center'}}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -651,30 +665,30 @@ export default function AdminDashboard() {
                           <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="monospaced-code" style={{fontSize: '0.75rem'}}>{t.id}</span></td>
                           <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className={`badge-status ${isChecked ? 'checked-in' : 'unused'}`}>{isChecked ? 'Checked In' : 'Unused'}</span></td>
                           <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="badge-status" style={approvalStyle}>{approval.toUpperCase()}</span></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}>
-                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', whiteSpace: 'nowrap'}}>
-                              {approval === 'pending' && (
-                                <>
-                                  <button className="btn-action-checkin" style={{backgroundColor: '#10b981'}} onClick={() => updateAttendeeApproval(t.id, 'approved')}>Approve</button>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444'}} onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
-                                </>
-                              )}
-                              {approval === 'approved' && !isChecked && (
-                                <>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'var(--brand-primary)'}} onClick={() => processCheckIn(t.id)}>Check In</button>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444'}} onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
-                                </>
-                              )}
-                              {approval === 'approved' && isChecked && (
-                                <>
-                                  <span style={{color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500, marginRight: '0.25rem'}}>Checked-in {t.timestamp ? t.timestamp.split(',')[1] : ''}</span>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.15rem 0.4rem', fontSize: '0.65rem'}} onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
-                                </>
-                              )}
-                              {approval === 'rejected' && (
+                          <td style={{padding: '0.75rem 1rem', textAlign: 'center', verticalAlign: 'middle'}}>
+                            {approval === 'pending' && (
+                              <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>
                                 <button className="btn-action-checkin" style={{backgroundColor: '#10b981'}} onClick={() => updateAttendeeApproval(t.id, 'approved')}>Approve</button>
-                              )}
-                            </div>
+                                <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
+                              </div>
+                            )}
+                            {approval === 'approved' && !isChecked && (
+                              <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>
+                                <button className="btn-action-checkin" style={{backgroundColor: 'var(--brand-primary)'}} onClick={() => processCheckIn(t.id)}>Check In</button>
+                                <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
+                              </div>
+                            )}
+                            {approval === 'approved' && isChecked && (
+                              <div style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', alignItems: 'center', justifyContent: 'center'}}>
+                                <span style={{color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 500}}>Checked-in {t.timestamp ? t.timestamp.split(',')[1] : ''}</span>
+                                <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
+                              </div>
+                            )}
+                            {approval === 'rejected' && (
+                              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                <button className="btn-action-checkin" style={{backgroundColor: '#10b981'}} onClick={() => updateAttendeeApproval(t.id, 'approved')}>Approve</button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );

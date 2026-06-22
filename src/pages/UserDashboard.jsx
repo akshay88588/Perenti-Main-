@@ -8,8 +8,8 @@ export default function UserDashboard() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [announcement, setAnnouncement] = useState('');
-  const [events, setEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [eventsMap, setEventsMap] = useState({}); // eventId -> event data
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,26 +20,22 @@ export default function UserDashboard() {
 
     const checkAnnouncements = () => {
       const latestAnnouncement = localStorage.getItem('latestAnnouncement');
-      if (latestAnnouncement) {
-        setAnnouncement(latestAnnouncement);
-      } else {
-        setAnnouncement('');
-      }
+      setAnnouncement(latestAnnouncement || '');
     };
     checkAnnouncements();
-    const interval = setInterval(checkAnnouncements, 2000);
+    const announcementInterval = setInterval(checkAnnouncements, 2000);
 
     const loadData = async () => {
       try {
-        // Load events
+        // 1. Load all events into a map so we can look up by eventId
         const eventsSnapshot = await getDocs(collection(db, 'events'));
-        const eventsList = [];
+        const map = {};
         eventsSnapshot.forEach((docSnap) => {
-          eventsList.push({ id: docSnap.id, ...docSnap.data() });
+          map[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
         });
-        setEvents(eventsList);
+        setEventsMap(map);
 
-        // Load tickets
+        // 2. Load only this user's tickets
         const q = query(collection(db, 'tickets'), where('email', '==', session.email));
         const querySnapshot = await getDocs(q);
         const ticketsList = [];
@@ -56,7 +52,7 @@ export default function UserDashboard() {
 
     loadData();
 
-    // Poll tickets live updates
+    // Poll tickets for live check-in status updates
     const pollInterval = setInterval(async () => {
       try {
         const q = query(collection(db, 'tickets'), where('email', '==', session.email));
@@ -66,29 +62,57 @@ export default function UserDashboard() {
           ticketsList.push({ id: docSnap.id, ...docSnap.data() });
         });
         setTickets(ticketsList);
-      } catch(e) {
+      } catch (e) {
         console.error("Error polling tickets", e);
       }
-    }, 1000);
+    }, 5000); // reduced to every 5s to avoid hammering Firestore
 
     return () => {
-      clearInterval(interval);
+      clearInterval(announcementInterval);
       clearInterval(pollInterval);
     };
   }, [session, navigate]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = () => window.print();
+
+  // Helper: safely get venue string from object or string
+  const getVenueStr = (venue) => {
+    if (!venue) return null;
+    if (typeof venue === 'object') {
+      return [venue.name, venue.address].filter(Boolean).join(', ') || null;
+    }
+    return venue;
+  };
+
+  // Helper: format date string from event
+  const getDateStr = (event) => {
+    if (!event) return 'TBA';
+    if (event.startDate) {
+      try {
+        return new Date(event.startDate).toLocaleDateString('en-IN', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      } catch { return event.startDate; }
+    }
+    return 'TBA';
+  };
+
+  // Helper: format time string from event
+  const getTimeStr = (event) => {
+    if (!event) return null;
+    const parts = [event.startTime, event.endTime].filter(Boolean);
+    if (parts.length === 0) return null;
+    const time = parts.join(' - ');
+    return event.timezone ? `${time} (${event.timezone})` : time;
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>;
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading tickets...</div>;
   }
 
   return (
     <div className="dashboard-page-wrapper">
       <main className="dashboard-main-content" id="print-area-wrapper">
-        {/* Success Banner (handled by Toast in React, omitted from here) */}
 
         {/* Announcements Banner */}
         {announcement && (
@@ -100,46 +124,6 @@ export default function UserDashboard() {
             </div>
           </div>
         )}
-
-        {/* Available Events */}
-        <div className="hub-header-row" style={{marginBottom: '1rem'}}>
-          <div className="hub-title-section">
-            <h1>Available Events</h1>
-            <p>Discover and register for upcoming events and meetups.</p>
-          </div>
-        </div>
-        
-        <div id="available-events-container" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem'}}>
-          {events.length === 0 ? (
-            <div style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>No upcoming events found.</div>
-          ) : (
-            events.map((evt) => {
-              const dateStr = evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA';
-              const capacityStr = evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited';
-              return (
-                <div key={evt.id} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                  {evt.bannerUrl && (
-                    <div style={{width: '100%', height: '140px', borderRadius: '0.5rem', overflow: 'hidden', marginBottom: '0.25rem'}}>
-                      <img src={evt.bannerUrl} style={{width: '100%', height: '100%', objectFit: 'cover'}} alt="Event Banner" />
-                    </div>
-                  )}
-                  <h4 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>{evt.name || 'Untitled Event'}</h4>
-                  <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    {dateStr}
-                  </div>
-                  <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    Capacity: {capacityStr}
-                  </div>
-                  <div style={{marginTop: '0.5rem'}}>
-                    <Link to={`/?eventId=${evt.id}`} className="btn btn-primary btn-sm" style={{width: '100%', textAlign: 'center', display: 'block', textDecoration: 'none'}}>View & Book</Link>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
 
         <div className="hub-header-row">
           <div className="hub-title-section">
@@ -163,16 +147,25 @@ export default function UserDashboard() {
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
             <h3>No passes found</h3>
-            <p>You haven't booked any passes for the Ebc 28th Meetup yet.</p>
-            <Link to="/" className="btn btn-primary">Find Event & Book Passes</Link>
+            <p>You haven't booked any passes yet. Browse available events to get started.</p>
+            <Link to="/" className="btn btn-primary">Browse Events</Link>
           </div>
         ) : (
           <div className="tickets-scroll-container" id="hub-tickets-container">
             {tickets.map((t, idx) => {
+              // Look up the event this ticket belongs to
+              const event = t.eventId ? eventsMap[t.eventId] : null;
+
+              // Fallback event name: use stored eventName field, or 'Unknown Event'
+              const eventName = event?.name || t.eventName || 'Unknown Event';
+              const dateStr = getDateStr(event);
+              const timeStr = getTimeStr(event);
+              const venueStr = getVenueStr(event?.venue);
+
               let statusText = 'Unused';
               let statusClass = 'unused';
               let statusStyle = {};
-              
+
               if (t.status === 'checked-in') {
                 statusText = 'Checked In';
                 statusClass = 'checked-in';
@@ -185,7 +178,7 @@ export default function UserDashboard() {
                 statusClass = 'rejected';
                 statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.4)' };
               }
-              
+
               const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.id)}`;
               const paymentText = t.payment === 'online' ? 'Paid (Online)' : 'Offline Payment';
               const paymentColor = t.payment === 'online' ? '#10b981' : '#d97706';
@@ -203,22 +196,22 @@ export default function UserDashboard() {
                       </div>
                       <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
                     </div>
-                    
+
                     <div className="ticket-stub-main">
-                      <h4 className="stub-event-title">Ebc 28th Meetup</h4>
+                      <h4 className="stub-event-title">{eventName}</h4>
                       <div className="stub-event-grid">
-                        <p className="stub-event-meta"><strong>Date:</strong> Sunday, June 14, 2026</p>
-                        <p className="stub-event-meta"><strong>Time:</strong> 9:00 AM - 11:00 AM (Asia/Kolkata)</p>
-                        <p className="stub-event-meta"><strong>Venue:</strong> Birch Cafe, Hyderabad</p>
+                        <p className="stub-event-meta"><strong>Date:</strong> {dateStr}</p>
+                        {timeStr && <p className="stub-event-meta"><strong>Time:</strong> {timeStr}</p>}
+                        {venueStr && <p className="stub-event-meta"><strong>Venue:</strong> {venueStr}</p>}
                       </div>
-                      
+
                       <div className="stub-user-info">
                         <p><strong>Attendee:</strong> <span>{t.email}</span></p>
                         <p><strong>Ticket ID:</strong> <span className="monospaced-code">{t.id}</span></p>
                         <p><strong>Pass:</strong> <span>{idx + 1} of {tickets.length}</span></p>
                         <p><strong>Payment Status:</strong> <span style={{color: paymentColor, fontWeight: 600}}>{paymentText}</span></p>
                       </div>
-                      
+
                       {t.answers && Object.keys(t.answers).length > 0 && (
                         <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
                           <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
@@ -231,13 +224,13 @@ export default function UserDashboard() {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="ticket-stub-cut-divider">
                       <div className="cut-left"></div>
                       <div className="cut-line"></div>
                       <div className="cut-right"></div>
                     </div>
-                    
+
                     <div className="ticket-stub-qr">
                       <img src={qrUrl} alt="Ticket QR Code" className="stub-qr-code-img" />
                       <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>

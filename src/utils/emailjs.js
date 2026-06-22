@@ -1,5 +1,10 @@
-export function compileEmailHtml(email, ticketIds) {
+export function compileEmailHtml(email, ticketIds, details = {}) {
   const qty = ticketIds.length;
+  const eventName = details.eventName || "Ebc 28th Meetup";
+  const eventDate = details.eventDate || "Sunday, June 14, 2026";
+  const eventTime = details.eventTime || "9:00 AM - 11:00 AM (Asia/Kolkata)";
+  const eventVenue = details.eventVenue || "Birch Cafe, Hyderabad";
+  
   let listHtml = '';
 
   ticketIds.forEach((id, i) => {
@@ -31,14 +36,14 @@ export function compileEmailHtml(email, ticketIds) {
         </div>
 
         <p style="margin: 0 0 12px 0; font-weight: bold; color: #1e293b;">Hi there,</p>
-        <p style="margin: 0 0 16px 0;">Thank you for booking your passes for the <strong>Ebc 28th Meetup</strong>! Since this event uses offline payment, your bookings have been successfully reserved. You can settle the ticket fee at the venue counter upon arrival.</p>
+        <p style="margin: 0 0 16px 0;">Thank you for booking your passes for the <strong>${eventName}</strong>! Since this event uses offline payment, your bookings have been successfully reserved. You can settle the ticket fee at the venue counter upon arrival.</p>
 
         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
           <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #1e293b;">Event Details</h4>
           <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-            <p style="margin: 0;">📅 <strong>Date:</strong> Sunday, June 14, 2026</p>
-            <p style="margin: 0;">⏰ <strong>Time:</strong> 9:00 AM - 11:00 AM (Asia/Kolkata)</p>
-            <p style="margin: 0;">📍 <strong>Venue:</strong> Birch Cafe, Hyderabad</p>
+            <p style="margin: 0;">📅 <strong>Date:</strong> ${eventDate}</p>
+            <p style="margin: 0;">⏰ <strong>Time:</strong> ${eventTime}</p>
+            <p style="margin: 0;">📍 <strong>Venue:</strong> ${eventVenue}</p>
           </div>
         </div>
 
@@ -57,18 +62,29 @@ export function compileEmailHtml(email, ticketIds) {
   `;
 }
 
-export async function sendEmailJSTicket(email, ticketIds, config) {
+export async function sendEmailJSTicket(email, ticketIds, config, event = null) {
+  const eventName = event?.name || "Ebc 28th Meetup";
+  const eventDate = event?.startDate
+    ? new Date(event.startDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : "Sunday, June 14, 2026";
+  const eventTime = event?.startTime
+    ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}${event.timezone ? ` (${event.timezone})` : ''}`
+    : "9:00 AM - 11:00 AM (Asia/Kolkata)";
+  const eventVenue = event?.venue
+    ? (typeof event.venue === 'object' ? [event.venue.name, event.venue.address].filter(Boolean).join(', ') : event.venue)
+    : "Birch Cafe, Hyderabad";
+
   const templateParams = {
     to_email: email,
     to_name: email.split('@')[0],
     ticket_ids: ticketIds.join(', '),
     quantity: ticketIds.length,
-    event_name: "Ebc 28th Meetup",
-    event_date: "Sunday, June 14, 2026",
-    event_time: "9:00 AM - 11:00 AM (Asia/Kolkata)",
-    event_venue: "Birch Cafe, Hyderabad",
+    event_name: eventName,
+    event_date: eventDate,
+    event_time: eventTime,
+    event_venue: eventVenue,
     ticket_details: ticketIds.map((id, i) => `Pass ${i + 1} of ${ticketIds.length}: ${id}`).join('\n'),
-    email_html: compileEmailHtml(email, ticketIds)
+    email_html: compileEmailHtml(email, ticketIds, { eventName, eventDate, eventTime, eventVenue })
   };
 
   try {

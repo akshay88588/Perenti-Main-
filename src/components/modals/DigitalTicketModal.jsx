@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function DigitalTicketModal({ show, onClose, ticketIds, email }) {
+export default function DigitalTicketModal({ show, onClose, ticketIds, email, eventName }) {
   if (!show || !ticketIds || ticketIds.length === 0) return null;
 
   const qty = ticketIds.length;
@@ -19,7 +19,7 @@ export default function DigitalTicketModal({ show, onClose, ticketIds, email }) 
         <div className="modal-body" style={{padding: '1.5rem', maxHeight: '75vh', overflowY: 'auto'}}>
           <div style={{textAlign: 'center', marginBottom: '1.25rem'}}>
             <p style={{fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0}}>
-              Your <strong>{qty} ticket{qty > 1 ? 's' : ''}</strong> for the <strong>Ebc 28th Meetup</strong> {qty > 1 ? 'have' : 'has'} been reserved successfully!
+              Your <strong>{qty} ticket{qty > 1 ? 's' : ''}</strong> for the <strong>{eventName || 'Ebc 28th Meetup'}</strong> {qty > 1 ? 'have' : 'has'} been reserved successfully!
             </p>
             <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem'}}>
               A confirmation email has been sent to <strong>{email}</strong>.

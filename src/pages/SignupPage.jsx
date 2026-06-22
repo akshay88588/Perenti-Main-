@@ -24,6 +24,8 @@ export default function SignupPage() {
   const urlParams = new URLSearchParams(location.search);
   const redirectQty = urlParams.get('qty');
   const redirectUrl = urlParams.get('redirect');
+  const eventId = urlParams.get('eventId');
+  const eventName = urlParams.get('eventName');
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -53,7 +55,7 @@ export default function SignupPage() {
       login(user.email, role);
 
       if (redirectQty && parseInt(redirectQty) > 0) {
-        await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining);
+        await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, {}, eventId, eventName);
         navigate('/user-dashboard');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;
