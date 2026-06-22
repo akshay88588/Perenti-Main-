@@ -458,38 +458,15 @@ export default function AdminDashboard() {
         </div>
 
         {/* Active Dashboard Selector */}
-        <div className="admin-event-filter-bar" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'var(--bg-info-card)',
-          border: '1px solid var(--border-card)',
-          borderRadius: '0.75rem',
-          padding: '1rem',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-          gap: '1rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div className="admin-event-filter-bar">
+          <div className="admin-event-filter-select-wrapper">
+            <span className="admin-event-filter-label">
               Active Dashboard:
             </span>
             <select 
               value={selectedEventId} 
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="form-control"
-              style={{
-                width: 'auto', 
-                minWidth: '240px', 
-                cursor: 'pointer', 
-                padding: '0.4rem 2rem 0.4rem 0.75rem', 
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                color: 'var(--text-main)',
-                border: '1px solid var(--border-input)',
-                borderRadius: '0.5rem',
-                background: 'var(--bg-primary)'
-              }}
+              className="form-control admin-event-filter-select"
             >
               <option value="all">🌐 All Events Combined</option>
               {allEvents.map(evt => (
@@ -501,14 +478,13 @@ export default function AdminDashboard() {
           </div>
           
           {selectedEventId !== 'all' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', background: 'rgba(90, 154, 142, 0.1)', color: 'var(--brand-primary)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontWeight: 600 }}>
+            <div className="admin-event-filter-clear-wrapper">
+              <span className="admin-event-filter-badge">
                 Filtering Active Dashboard
               </span>
               <button 
                 onClick={() => setSelectedEventId('all')} 
-                className="btn btn-secondary btn-sm"
-                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid var(--border-card)' }}
+                className="btn btn-secondary btn-sm admin-event-filter-clear-btn"
               >
                 Clear Filter
               </button>
@@ -762,9 +738,9 @@ export default function AdminDashboard() {
                 <thead>
                   <tr>
                     <th style={{padding: '0.75rem 1rem'}}>Email</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Ticket ID</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Status</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Approval</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Ticket ID</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Status</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Approval</th>
                     <th style={{padding: '0.75rem 1rem', textAlign: 'center'}}>Action</th>
                   </tr>
                 </thead>
@@ -783,9 +759,9 @@ export default function AdminDashboard() {
                       return (
                         <tr key={t.id}>
                           <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><button onClick={() => setSelectedTicket(t)} style={{background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, borderBottom: '1px dashed var(--brand-primary)', cursor: 'pointer'}}>{t.email}</button></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="monospaced-code" style={{fontSize: '0.75rem'}}>{t.id}</span></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className={`badge-status ${isChecked ? 'checked-in' : 'unused'}`}>{isChecked ? 'Checked In' : 'Unused'}</span></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="badge-status" style={approvalStyle}>{approval.toUpperCase()}</span></td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="monospaced-code" style={{fontSize: '0.75rem'}}>{t.id}</span></td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className={`badge-status ${isChecked ? 'checked-in' : 'unused'}`}>{isChecked ? 'Checked In' : 'Unused'}</span></td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="badge-status" style={approvalStyle}>{approval.toUpperCase()}</span></td>
                           <td style={{padding: '0.75rem 1rem', textAlign: 'center', verticalAlign: 'middle'}}>
                             {approval === 'pending' && (
                               <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>

@@ -340,7 +340,7 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-actions" style={{display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem'}}>
+          <div className="form-actions">
             <Link to="/admin-dashboard" className="btn btn-outline btn-lg">Cancel</Link>
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{minWidth: '150px'}}>
               {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Event' : 'Create Event')}

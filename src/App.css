@@ -2732,6 +2732,80 @@ body {
     text-align: center;
     white-space: normal;
   }
+
+  /* Table mobile hiding */
+  .desktop-only-col {
+    display: none !important;
+  }
+
+  /* Event card actions stacking */
+  .event-card-actions {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Admin Filter selector responsive bar */
+  .admin-event-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0.75rem !important;
+    gap: 0.75rem !important;
+  }
+  
+  .admin-event-filter-select-wrapper {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+
+  .admin-event-filter-label {
+    align-self: flex-start !important;
+  }
+
+  .admin-event-filter-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-event-filter-clear-wrapper {
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  /* Admin Header stacking */
+  .admin-header-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+  
+  .btn-create-event {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Header compact sizing on mobile */
+  .header-container {
+    padding: 0.5rem 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+  .header-actions {
+    gap: 0.4rem !important;
+  }
+  .header-actions .btn {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Form actions stacking */
+  .form-actions {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  .form-actions > * {
+    width: 100% !important;
+    text-align: center !important;
+  }
 }
 
 /* 4. Small Mobile Breakpoint (max-width: 480px) */
@@ -3310,4 +3384,76 @@ body {
 .btn-danger.btn-sm {
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   Global Admin filter selector & form-actions classes
+   ========================================================================== */
+.admin-event-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-info-card);
+  border: 1px solid var(--border-card);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-event-filter-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-event-filter-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-event-filter-select {
+  width: auto;
+  min-width: 240px;
+  cursor: pointer;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  border: 1px solid var(--border-input);
+  border-radius: 0.5rem;
+  background: var(--bg-primary);
+}
+
+.admin-event-filter-clear-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-event-filter-badge {
+  font-size: 0.8rem;
+  background: rgba(90, 154, 142, 0.1);
+  color: var(--brand-primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.admin-event-filter-clear-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border: 1px solid var(--border-card);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
 }

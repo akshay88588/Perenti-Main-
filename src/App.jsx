@@ -31,7 +31,11 @@ function App() {
       <Header />
       <Routes>
         {/* Homepage: events list OR event detail (via ?eventId=) */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        } />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 

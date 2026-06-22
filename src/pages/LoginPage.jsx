@@ -51,11 +51,11 @@ export default function LoginPage() {
         const savedAnswers = JSON.parse(sessionStorage.getItem('currentBookingAnswers') || '{}');
         await bookTicketsForUser(userEmail, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, savedAnswers, eventId, eventName);
         sessionStorage.removeItem('currentBookingAnswers');
-        navigate('/user-dashboard');
+        navigate('/');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        navigate('/user-dashboard');
+        navigate('/');
       }
     }
   };

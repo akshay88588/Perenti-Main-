@@ -58,11 +58,11 @@ export default function SignupPage() {
         const savedAnswers = JSON.parse(sessionStorage.getItem('currentBookingAnswers') || '{}');
         await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, savedAnswers, eventId, eventName);
         sessionStorage.removeItem('currentBookingAnswers');
-        navigate('/user-dashboard');
+        navigate('/');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        navigate(role === 'admin' ? '/admin-dashboard' : '/user-dashboard');
+        navigate(role === 'admin' ? '/admin-dashboard' : '/');
       }
     } catch (err) {
       console.error("Error signing up:", err);
