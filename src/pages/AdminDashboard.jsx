@@ -593,8 +593,10 @@ export default function AdminDashboard() {
 
         <div className="admin-grid-layout">
           <div id="admin-left-col">
-            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
-              <h3 className="admin-panel-title" style={{margin: 0}}>QR Scanner</h3>
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
+              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem'}}>
+                <h3 className="admin-panel-title" style={{margin: 0}}>QR Scanner</h3>
+              </div>
               <div className="scanner-viewfinder" style={{width: '100%', aspectRatio: '4/3', position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', background: '#000'}}>
                 <video ref={videoRef} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1, display: isScanning ? 'block' : 'none'}}></video>
                 <canvas ref={canvasRef} style={{display: 'none'}}></canvas>
@@ -636,15 +638,15 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="admin-panel-box">
-              <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem'}}>
+            <div className="admin-panel-box" style={{padding: '1rem'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '1rem'}}>
                 <div style={{width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(90,154,142,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
                 </div>
                 <h3 className="admin-panel-title" style={{margin: 0}}>Send Announcement</h3>
               </div>
-              <p className="panel-section-subtitle" style={{marginBottom: '1.25rem'}}>Post a message that will be displayed live on the Attendee Tickets Hub.</p>
-              <div style={{marginBottom: '1rem'}}>
+              <p className="panel-section-subtitle" style={{marginBottom: '1rem'}}>Post a message that will be displayed live on the Attendee Tickets Hub.</p>
+              <div style={{marginBottom: '0.5rem'}}>
                 <textarea
                   className="form-control"
                   placeholder="Write your announcement here..."
@@ -652,7 +654,7 @@ export default function AdminDashboard() {
                   onChange={e => setAnnouncement(e.target.value)}
                   style={{width: '100%', minHeight: '100px', fontFamily: 'inherit', fontSize: '0.875rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-input)', resize: 'vertical', lineHeight: 1.6, color: 'var(--text-main)', background: 'var(--bg-input)'}}
                 />
-                <p style={{fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.35rem', textAlign: 'right'}}>{announcement.length} characters</p>
+                <p style={{fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.35rem 0 0 0', textAlign: 'right'}}>{announcement.length} characters</p>
               </div>
               <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement} style={{width: '100%'}}>
                 📢 Broadcast Announcement
@@ -660,10 +662,10 @@ export default function AdminDashboard() {
             </div>
 
             <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
-              <div>
-                <h3 className="admin-panel-title" style={{margin: '0 0 0.35rem 0'}}>Custom Registration Form</h3>
-                <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
+              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem'}}>
+                <h3 className="admin-panel-title" style={{margin: 0}}>Custom Registration Form</h3>
               </div>
+              <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
                 {formConfig.map((q, idx) => (
                   <div key={q.id} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s'}}>
