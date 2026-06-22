@@ -206,14 +206,14 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="dashboard-page-wrapper">
+    <div className="create-event-page-wrapper">
       <header className="site-header">
-        <div className="header-container">
+        <div className="header-container create-event-header-container">
           <Link to="/" className="brand-link">
             <span className="brand-name">perenti</span>
           </Link>
           
-          <div className="header-actions" style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+          <div className="header-actions create-event-header-actions">
             <span className="session-email-text" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session?.email}</span>
             <Link to="/admin-dashboard" className="btn btn-secondary btn-sm">Back to Dashboard</Link>
             <button type="button" className="btn btn-outline btn-sm" onClick={() => {
@@ -224,7 +224,7 @@ export default function CreateEventPage() {
         </div>
       </header>
 
-      <main className="admin-main-content" style={{flex: 1, maxWidth: '800px', width: '100%', margin: '0 auto', padding: '2.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+      <main className="admin-main-content create-event-main-content">
         <div className="admin-header-row" style={{marginBottom: '1rem'}}>
           <div className="admin-title-section">
             <h1 style={{fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)'}}>{isEditMode ? 'Edit Event' : 'Create New Event'}</h1>
@@ -242,7 +242,7 @@ export default function CreateEventPage() {
 
         <form onSubmit={handleSubmit}>
           
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
               Basic Information
@@ -280,7 +280,7 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               Date & Time
@@ -301,7 +301,7 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
               Venue
@@ -320,7 +320,7 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               Capacity

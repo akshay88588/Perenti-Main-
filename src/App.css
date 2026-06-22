@@ -2015,68 +2015,76 @@ h1, h2, h3, h4, h5, h6 {
    Print Stylesheet: Ensures ONLY tickets print, 1 per page
    ========================================================================== */
 @media print {
-  /* Hide all background content */
-  body > *:not(#digital-ticket-modal) {
+  /* Hide header, navigation, buttons, and anything that is not the print container */
+  header,
+  .site-header,
+  button,
+  .btn,
+  .hub-title-section p,
+  .hub-header-row button,
+  .view-tabs,
+  .search-filter-row,
+  .admin-event-filter-bar,
+  .modal-header .modal-close-btn,
+  .modal-body button,
+  .modal-overlay:not(#ticket-success-modal-overlay) {
     display: none !important;
   }
-  
-  /* Show only the digital ticket modal overlay, resetting centering/scrolling */
-  body > #digital-ticket-modal {
-    display: block !important;
-    position: static !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    padding: 0 !important;
+
+  /* Reset root and page layouts for printing */
+  #root,
+  body,
+  html {
+    background: none !important;
+    background-color: #ffffff !important;
     width: 100% !important;
     height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* Style the modal card wrapper for printing */
-  #digital-ticket-modal .modal-card {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure the dashboard main content wrapper is visible and uses full width */
+  .dashboard-page-wrapper,
+  .dashboard-main-content {
     width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* Reset the modal body scroll container for printing to prevent scroll clips */
-  #digital-ticket-modal .ticket-modal-body {
-    display: block !important;
+    max-width: 100% !important;
     padding: 0 !important;
-    max-height: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: none !important;
     overflow: visible !important;
-    height: auto !important;
   }
 
-  /* Hide modal headers and action buttons */
-  #digital-ticket-modal .modal-header,
-  #digital-ticket-modal .ticket-actions-row {
+  /* Hide the title section and print buttons on My Tickets Hub */
+  .hub-header-row {
     display: none !important;
   }
 
-  /* Ensure ticket stubs stack without overlay restrictions */
-  #user-tickets-container {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
+  /* Hide announcements */
+  .announcements-alert {
+    display: none !important;
   }
 
-  /* Force print page break per ticket container */
+  /* Hide empty ticket states if any */
+  .empty-tickets-view {
+    display: none !important;
+  }
+
+  /* Print Ticket Pages */
   .print-ticket-page {
     display: block !important;
+    width: 100% !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-after: always !important;
     break-after: page !important;
-    width: 100% !important;
+    margin: 0 !important;
+    padding: 1cm !important;
+    box-sizing: border-box !important;
   }
 
   .print-ticket-page:last-child {
@@ -2084,28 +2092,99 @@ h1, h2, h3, h4, h5, h6 {
     break-after: avoid !important;
   }
 
-  /* Style each ticket stub to fit printed page */
+  /* Ticket stub styling inside printer */
   .ticket-stub-container {
     display: flex !important;
-    visibility: visible !important;
-    border: 1px solid #E5E7EB !important;
-    background-color: #F9FAFB !important;
-    margin: 0 auto 30px auto !important;
+    flex-direction: column !important;
+    border: 2px solid #5A9A8E !important;
+    background-color: #ffffff !important;
+    margin: 0 auto !important;
     width: 100% !important;
-    max-width: 400px !important;
+    max-width: 500px !important;
     box-shadow: none !important;
-    
-    /* Force browsers to print CSS background colors and borders */
+    border-radius: 1rem !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide print-specific headers inside stubs if necessary */
   .ticket-stub-header {
     background-color: #5A9A8E !important;
     color: #ffffff !important;
+    padding: 1rem 1.5rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Hide non-print areas of the success modal overlay, show only tickets */
+  #ticket-success-modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  #ticket-success-modal-overlay .modal-card {
+    position: static !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  #ticket-success-modal-overlay .modal-header,
+  #ticket-success-modal-overlay .modal-body > div:first-child,
+  #ticket-success-modal-overlay .modal-body > div:last-child {
+    display: none !important;
+  }
+
+  #ticket-success-modal-overlay .modal-body {
+    padding: 0 !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  #generated-tickets-list {
+    display: block !important;
+  }
+
+  #generated-tickets-list .digital-ticket-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    margin: 2cm auto !important;
+    max-width: 500px !important;
+    border: 2px solid #5A9A8E !important;
+    border-radius: 1rem !important;
+    padding: 2rem !important;
+    background-color: #ffffff !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1.5rem !important;
+    align-items: center !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #generated-tickets-list .digital-ticket-card:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
 
@@ -3456,4 +3535,108 @@ body {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+/* Form section card styles (moved from inline) */
+.form-section-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+/* Outermost container for Create/Edit event page */
+.create-event-page-wrapper {
+  background-color: var(--bg-primary);
+  min-height: calc(100vh - 70px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Main content for Create/Edit event page */
+.create-event-main-content {
+  flex: 1;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Responsive Overrides (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Create Event Header responsive wrapping */
+  .create-event-header-container {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+  
+  .create-event-header-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  
+  .create-event-header-actions .btn {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  /* Form content padding adjust on mobile */
+  .create-event-main-content {
+    padding: 1.5rem 1rem !important;
+    gap: 1rem !important;
+  }
+
+  .form-section-card {
+    padding: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  /* My Tickets Mobile Overrides */
+  .tickets-scroll-container {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 1rem auto 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .print-ticket-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .ticket-stub-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+  }
+
+  .stub-user-info p,
+  .stub-user-info span,
+  .stub-user-info strong {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+  }
+
+  .stub-event-title {
+    font-size: 1.15rem !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
 }
