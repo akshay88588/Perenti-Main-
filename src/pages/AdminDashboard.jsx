@@ -6,6 +6,51 @@ import { db } from '../config/firebase';
 import jsQR from 'jsqr';
 import EventImage from '../components/EventImage';
 
+// Helper function to format check-in timestamps to uniform hh:mm:ss am/pm
+const formatCheckInTime = (timestamp) => {
+  if (!timestamp) return '';
+  try {
+    let timeStr = '';
+    if (timestamp.includes(',')) {
+      timeStr = timestamp.split(',')[1].trim();
+    } else {
+      timeStr = timestamp.trim();
+    }
+    
+    // Match hh:mm:ss and optional am/pm
+    const timeParts = timeStr.match(/(\d+):(\d+):(\d+)(?:\s*(am|pm))?/i);
+    if (timeParts) {
+      let hours = parseInt(timeParts[1], 10);
+      const minutes = timeParts[2].padStart(2, '0');
+      const seconds = timeParts[3].padStart(2, '0');
+      const ampm = timeParts[4] ? timeParts[4].toLowerCase() : '';
+      
+      const hoursStr = String(hours).padStart(2, '0');
+      if (ampm) {
+        return `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+      } else {
+        return `${hoursStr}:${minutes}:${seconds}`;
+      }
+    }
+
+    // Date object fallback
+    const date = new Date(timestamp);
+    if (!isNaN(date.getTime())) {
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = String(hours).padStart(2, '0');
+      return `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+    }
+  } catch (e) {
+    console.error("Error formatting time:", e);
+  }
+  return timestamp;
+};
+
 // Admin dashboard component
 export default function AdminDashboard() {
   const { session } = useAuth();
@@ -680,11 +725,13 @@ export default function AdminDashboard() {
                       {/* Drag icon placeholder */}
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
                       
-                      <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                      <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
-                          <strong style={{color: 'var(--text-main)'}}>{q.label}</strong>
+                          <strong style={{color: 'var(--text-main)'}}>
+                            {q.label}
+                            {q.required && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
+                          </strong>
                           <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
-                          {q.required && <span style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>}
                         </div>
                         {q.options && (
                           <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
@@ -754,32 +801,89 @@ export default function AdminDashboard() {
           </div>
 
           <div className="admin-panel-box" id="admin-rsvp-box" style={{paddingTop: '1rem', paddingBottom: '1rem'}}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem'}}>
-              <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>RSVP & Registration Search</h3>
-              <div className="view-tabs" style={{display: 'flex', gap: '0.25rem', background: 'var(--bg-info-card)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid var(--border-card)', marginLeft: 'auto'}}>
-                <button type="button" style={{fontSize: '0.75rem', padding: '0.35rem 0.75rem', border: 'none', borderRadius: '0.375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', background: activeTab === 'all' ? 'var(--brand-primary)' : 'transparent', color: activeTab === 'all' ? '#ffffff' : 'var(--text-secondary)'}} onClick={() => {setActiveTab('all'); setStatusFilter('all');}}>All Registrations</button>
-                <button type="button" style={{fontSize: '0.75rem', padding: '0.35rem 0.75rem', border: 'none', borderRadius: '0.375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', background: activeTab === 'checked-in' ? 'var(--brand-primary)' : 'transparent', color: activeTab === 'checked-in' ? '#ffffff' : 'var(--text-secondary)'}} onClick={() => {setActiveTab('checked-in'); setStatusFilter('checked-in');}}>Post-Event Attendees (Checked-In)</button>
+            <div className="rsvp-header-row">
+              <h3 className="rsvp-title">RSVP & Registration Search</h3>
+              <div className="rsvp-view-tabs">
+                <button type="button" className={`rsvp-tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => {setActiveTab('all'); setStatusFilter('all');}}>All Registrations</button>
+                <button type="button" className={`rsvp-tab-btn ${activeTab === 'checked-in' ? 'active' : ''}`} onClick={() => {setActiveTab('checked-in'); setStatusFilter('checked-in');}}>Post-Event Attendees (Checked-In)</button>
               </div>
             </div>
-            <div className="search-filter-row" style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
-              <input type="text" className="form-control" placeholder="Search by email or Ticket ID..." style={{flex: 1, minWidth: '180px'}} value={searchFilter} onChange={e => setSearchFilter(e.target.value)} />
-              <select className="form-control" style={{width: '130px', cursor: 'pointer', padding: '0.25rem 0.5rem'}} value={statusFilter} onChange={e => {setStatusFilter(e.target.value); setActiveTab(e.target.value === 'checked-in' ? 'checked-in' : 'all');}}>
-                <option value="all">All Statuses</option>
-                <option value="unused">Unused</option>
-                <option value="checked-in">Checked In</option>
-              </select>
-              <select className="form-control" style={{width: '140px', cursor: 'pointer', padding: '0.25rem 0.5rem'}} value={approvalFilter} onChange={e => setApprovalFilter(e.target.value)}>
-                <option value="all">All Approvals</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-              <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg-info-card)', border: '1px solid var(--border-card)', color: 'var(--text-main)'}} onClick={() => exportCSV(filteredTickets, 'registrations_filtered.csv')}>
-                📥 Export Filtered CSV
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', color: '#ffffff'}} onClick={() => exportCSV(tickets.filter(t => t.status === 'checked-in'), 'post_event_attendees.csv')}>
-                📥 Export Checked-In
-              </button>
+            {/* Filters Row */}
+            <div className="rsvp-filters-grid">
+              {/* Search input with magnifying glass icon */}
+              <div className="rsvp-search-container">
+                <span className="rsvp-search-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input 
+                  type="text" 
+                  className="rsvp-search-input" 
+                  placeholder="Search by email or Ticket ID..." 
+                  value={searchFilter} 
+                  onChange={e => setSearchFilter(e.target.value)} 
+                />
+              </div>
+
+              {/* Status and Approval filters */}
+              <div className="rsvp-selects-group">
+                <select 
+                  className="rsvp-select" 
+                  value={statusFilter} 
+                  onChange={e => {setStatusFilter(e.target.value); setActiveTab(e.target.value === 'checked-in' ? 'checked-in' : 'all');}}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="unused">Unused</option>
+                  <option value="checked-in">Checked In</option>
+                </select>
+
+                <select 
+                  className="rsvp-select" 
+                  value={approvalFilter} 
+                  onChange={e => setApprovalFilter(e.target.value)}
+                >
+                  <option value="all">All Approvals</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active filters status and export buttons row */}
+            <div className="rsvp-status-bar">
+              <div className="rsvp-count-info">
+                <span className="rsvp-count-text">
+                  Showing {filteredTickets.length} of {tickets.length} registrations
+                </span>
+                {(searchFilter || statusFilter !== 'all' || approvalFilter !== 'all') && (
+                  <button 
+                    type="button" 
+                    onClick={() => {setSearchFilter(''); setStatusFilter('all'); setApprovalFilter('all'); setActiveTab('all');}} 
+                    className="rsvp-clear-btn"
+                  >
+                    ✕ Clear all filters
+                  </button>
+                )}
+              </div>
+
+              <div className="rsvp-actions-group">
+                <button 
+                  type="button" 
+                  className="rsvp-action-btn secondary" 
+                  onClick={() => exportCSV(filteredTickets, 'registrations_filtered.csv')}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Filtered CSV
+                </button>
+                <button 
+                  type="button" 
+                  className="rsvp-action-btn primary" 
+                  onClick={() => exportCSV(tickets.filter(t => t.status === 'checked-in'), 'post_event_attendees.csv')}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Checked-In
+                </button>
+              </div>
             </div>
             <div className="checked-in-list-container" style={{flex: 1, minHeight: 0, overflow: 'auto'}}>
               <table className="attendees-table">
@@ -823,9 +927,11 @@ export default function AdminDashboard() {
                                 <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
                               </div>
                             )}
-                            {approval === 'approved' && isChecked && (
-                              <div style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', alignItems: 'center', justifyContent: 'center'}}>
-                                <span style={{color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 500}}>Checked-in {t.timestamp ? t.timestamp.split(',')[1] : ''}</span>
+                             {approval === 'approved' && isChecked && (
+                              <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>
+                                <span className="btn-action-checkin" style={{backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.2)', cursor: 'default', pointerEvents: 'none'}}>
+                                  Checked-in {formatCheckInTime(t.timestamp)}
+                                </span>
                                 <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
                               </div>
                             )}
