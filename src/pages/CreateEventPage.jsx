@@ -6,6 +6,26 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { signInAnonymously } from "firebase/auth";
 import { db, storage, auth } from '../config/firebase';
 
+const promiseWithTimeout = (promise, ms, timeoutError) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutError)), ms))
+  ]);
+};
+
+const isValidUrl = (urlString) => {
+  if (!urlString) return true;
+  if (urlString.startsWith('/') || (!urlString.includes('://') && (urlString.endsWith('.jpg') || urlString.endsWith('.png') || urlString.endsWith('.jpeg') || urlString.endsWith('.webp') || urlString.endsWith('.gif')))) {
+    return true;
+  }
+  try {
+    const url = new URL(urlString);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch (_) {
+    return false;
+  }
+};
+
 export default function CreateEventPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -89,6 +109,9 @@ export default function CreateEventPage() {
           waitlistEnabled: evt.capacity?.waitlistEnabled || false
         });
         if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
+        if (evt.customRegistrationFields) {
+          localStorage.setItem('customRegistrationForm', JSON.stringify(evt.customRegistrationFields));
+        }
       } else {
         // Try local storage fallback
         const localEvents = JSON.parse(localStorage.getItem('events')) || [];
@@ -109,6 +132,9 @@ export default function CreateEventPage() {
             waitlistEnabled: evt.capacity?.waitlistEnabled || false
           });
           if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
+          if (evt.customRegistrationFields) {
+            localStorage.setItem('customRegistrationForm', JSON.stringify(evt.customRegistrationFields));
+          }
         } else {
           setError("Event not found locally or in Firestore.");
         }
@@ -139,11 +165,29 @@ export default function CreateEventPage() {
     setLoading(true);
 
     try {
-      if (!auth.currentUser) {
-        try {
-          await signInAnonymously(auth);
-        } catch (err) {
-          console.warn("Anonymous auth fallback failed:", err);
+      // Validate URLs
+      if (formData.bannerUrl && !isValidUrl(formData.bannerUrl)) {
+        setError("Event Banner URL is invalid. Please enter a valid URL (starting with http:// or https://) or a local asset path.");
+        setLoading(false);
+        return;
+      }
+      if (formData.mapsLink && !isValidUrl(formData.mapsLink)) {
+        setError("Google Maps Link is invalid. Please enter a valid URL starting with http:// or https://");
+        setLoading(false);
+        return;
+      }
+
+      if (auth) {
+        if (!auth.currentUser) {
+          try {
+            await promiseWithTimeout(
+              signInAnonymously(auth),
+              4000,
+              "Authentication timed out."
+            );
+          } catch (err) {
+            console.warn("Anonymous auth fallback failed:", err);
+          }
         }
       }
 
@@ -151,12 +195,19 @@ export default function CreateEventPage() {
 
       if (bannerFile) {
         try {
-          const storageRef = ref(storage, 'event-banners/' + Date.now() + '_' + bannerFile.name.replace(/[^a-zA-Z0-9.]/g, ''));
-          const snapshot = await uploadBytes(storageRef, bannerFile);
-          finalBannerUrl = await getDownloadURL(snapshot.ref);
+          if (storage) {
+            const storageRef = ref(storage, 'event-banners/' + Date.now() + '_' + bannerFile.name.replace(/[^a-zA-Z0-9.]/g, ''));
+            const snapshot = await promiseWithTimeout(
+              uploadBytes(storageRef, bannerFile),
+              6000,
+              "Banner upload timed out."
+            );
+            finalBannerUrl = await getDownloadURL(snapshot.ref);
+          } else {
+            console.warn("Firebase Storage is not configured. Proceeding without image upload.");
+          }
         } catch (uploadErr) {
-          console.warn("Banner upload failed (likely CORS or permission issue). Proceeding without new image.", uploadErr);
-          // Fallback to existing or empty if upload fails
+          console.warn("Banner upload failed. Proceeding with existing or empty image.", uploadErr);
           if (!formData.bannerUrl && originalBannerUrl) {
             finalBannerUrl = originalBannerUrl;
           }
@@ -165,14 +216,37 @@ export default function CreateEventPage() {
         finalBannerUrl = originalBannerUrl;
       }
 
+      // Load custom registration form configuration to save with the event
+      let customRegistrationFields = [];
+      try {
+        const storedConfig = localStorage.getItem('customRegistrationForm');
+        if (storedConfig) {
+          customRegistrationFields = JSON.parse(storedConfig);
+        } else {
+          // Default ones
+          customRegistrationFields = [
+            { id: 'q-building', type: 'text', label: 'What are you building?', required: true },
+            { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
+            { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
+            { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
+            { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
+            { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
+            { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
+            { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
+          ];
+        }
+      } catch (e) {
+        console.warn("Failed to parse custom registration form configuration:", e);
+      }
+
       const eventData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        bannerUrl: finalBannerUrl,
+        bannerUrl: finalBannerUrl || '',
         category: formData.category,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        registrationDeadline: formData.registrationDeadline,
+        registrationDeadline: formData.registrationDeadline || '',
         venue: {
           name: formData.venueName.trim(),
           address: formData.address.trim(),
@@ -180,27 +254,64 @@ export default function CreateEventPage() {
         },
         capacity: {
           maxAttendees: parseInt(formData.maxAttendees, 10) || 0,
-          waitlistEnabled: formData.waitlistEnabled
+          waitlistEnabled: formData.waitlistEnabled || false
         },
-        createdBy: session.email,
+        customRegistrationFields: customRegistrationFields,
+        createdBy: session?.email || 'admin@perenti.com',
         status: 'active'
       };
 
-      if (isEditMode && editId) {
-        const eventRef = doc(db, 'events', editId);
-        await setDoc(eventRef, { ...eventData, updatedAt: serverTimestamp() }, { merge: true });
+      let docId = editId;
+
+      if (db) {
+        if (isEditMode && editId) {
+          const eventRef = doc(db, 'events', editId);
+          await promiseWithTimeout(
+            setDoc(eventRef, { ...eventData, updatedAt: serverTimestamp() }, { merge: true }),
+            5000,
+            "Firestore write timed out (offline or network error)."
+          );
+        } else {
+          const eventsRef = collection(db, 'events');
+          const docRef = await promiseWithTimeout(
+            addDoc(eventsRef, { ...eventData, createdAt: serverTimestamp() }),
+            5000,
+            "Firestore write timed out (offline or network error)."
+          );
+          docId = docRef.id;
+        }
       } else {
-        const eventsRef = collection(db, 'events');
-        await addDoc(eventsRef, { ...eventData, createdAt: serverTimestamp() });
+        console.warn("Firebase Firestore is not configured. Saving locally only.");
       }
 
-      setTimeout(() => {
-        navigate('/admin-dashboard');
-      }, 1000);
+      // Always save to localStorage as fallback/sync
+      try {
+        const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+        const newLocalEvent = {
+          id: docId || (isEditMode && editId ? editId : 'local_' + Date.now()),
+          ...eventData,
+          createdAt: isEditMode && editId ? (localEvents.find(e => e.id === editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        let updatedEvents;
+        if (isEditMode && editId) {
+          updatedEvents = localEvents.map(e => e.id === editId ? newLocalEvent : e);
+        } else {
+          updatedEvents = [...localEvents, newLocalEvent];
+        }
+        localStorage.setItem('events', JSON.stringify(updatedEvents));
+      } catch (storageErr) {
+        console.warn("Failed to save event to local storage fallback:", storageErr);
+      }
+
+      setLoading(false);
+      alert(isEditMode ? "Event updated successfully!" : "Event created successfully!");
+      navigate('/admin-dashboard');
 
     } catch (err) {
       console.error("Save failed:", err);
-      setError("Failed to save event. " + err.message);
+      setError("Failed to save event. " + (err?.message || err));
       setLoading(false);
     }
   };

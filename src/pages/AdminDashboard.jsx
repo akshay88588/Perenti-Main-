@@ -92,21 +92,40 @@ export default function AdminDashboard() {
 
     const loadData = async () => {
       try {
-        const eventsSnapshot = await getDocs(collection(db, 'events'));
-        const eventsList = [];
-        eventsSnapshot.forEach((docSnap) => {
-          eventsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        setEvents(eventsList);
+        let eventsList = [];
+        let ticketsList = [];
 
-        const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
-        const ticketsList = [];
-        ticketsSnapshot.forEach((docSnap) => {
-          ticketsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        if (db) {
+          try {
+            const eventsSnapshot = await getDocs(collection(db, 'events'));
+            eventsSnapshot.forEach((docSnap) => {
+              eventsList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch events from Firestore, using localStorage fallback:", e);
+            eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          }
+
+          try {
+            const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
+            ticketsSnapshot.forEach((docSnap) => {
+              ticketsList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch tickets from Firestore:", e);
+          }
+        } else {
+          eventsList = JSON.parse(localStorage.getItem('events')) || [];
+        }
+
+        setEvents(eventsList);
         setTickets(ticketsList);
       } catch (error) {
         console.error("Error loading admin data:", error);
+        try {
+          const eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          setEvents(eventsList);
+        } catch (_) {}
       } finally {
         setLoading(false);
       }

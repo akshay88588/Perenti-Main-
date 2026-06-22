@@ -56,14 +56,27 @@ export default function HomePage() {
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const snapshot = await getDocs(collection(db, 'events'));
-        const list = [];
-        snapshot.forEach((docSnap) => {
-          list.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        let list = [];
+        if (db) {
+          try {
+            const snapshot = await getDocs(collection(db, 'events'));
+            snapshot.forEach((docSnap) => {
+              list.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch events from Firestore, using localStorage fallback:", e);
+            list = JSON.parse(localStorage.getItem('events')) || [];
+          }
+        } else {
+          list = JSON.parse(localStorage.getItem('events')) || [];
+        }
         setEvents(list);
       } catch (err) {
         console.error('Error loading events:', err);
+        try {
+          const list = JSON.parse(localStorage.getItem('events')) || [];
+          setEvents(list);
+        } catch (_) {}
       } finally {
         setEventsLoading(false);
       }
@@ -384,7 +397,7 @@ export default function HomePage() {
 
         <AuthChoiceModal show={showAuthChoice} onClose={() => setShowAuthChoice(false)} qty={qty} eventId={eventId} eventName={selectedEvent?.name} />
         <CheckoutLoginModal show={showCheckoutLogin} onClose={() => setShowCheckoutLogin(false)} qty={qty} onLoginSuccess={() => { setShowCheckoutLogin(false); setShowQuestions(true); }} />
-        <RegistrationQuestionsModal show={showQuestions} onClose={() => setShowQuestions(false)} onSubmit={handleQuestionsSubmit} />
+        <RegistrationQuestionsModal show={showQuestions} onClose={() => setShowQuestions(false)} onSubmit={handleQuestionsSubmit} eventDetails={selectedEvent} />
         <RegistrationSummaryModal show={showSummary} onClose={() => setShowSummary(false)} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} />
         <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/my-tickets'); }} ticketIds={generatedTicketIds} email={session?.email} eventName={selectedEvent?.name} paymentMethod={lastPaymentMethod} />
         <AttendeeProfileModal show={selectedAttendee !== null} onClose={() => setSelectedAttendee(null)} attendee={selectedAttendee} />
