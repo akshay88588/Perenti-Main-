@@ -24,7 +24,14 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit }) 
         ];
       }
       setFormConfig(config);
-      setAnswers({});
+      
+      const initialAnswers = {};
+      config.forEach(q => {
+        if (q.type === 'toggle') {
+          initialAnswers[q.label] = 'No';
+        }
+      });
+      setAnswers(initialAnswers);
     }
   }, [show]);
 
