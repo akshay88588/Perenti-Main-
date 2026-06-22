@@ -19,6 +19,27 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'checked-in'
+  const [selectedEventId, setSelectedEventId] = useState('all');
+
+  const allEvents = [
+    {
+      id: 'main',
+      name: "Ebc 28th Meetup (Default)",
+      description: "Join us at the Ebc 28th meetup, where aspiring founders, business owners, professionals, and students can share their stories.",
+      bannerUrl: "ebc_meetup_banner.jpg",
+      category: "Networking",
+      startDate: "2026-06-14T09:00",
+      endDate: "2026-06-14T11:00",
+      venue: {
+        name: "Birch Cafe",
+        address: "Vanasthalipuram, Hyderabad"
+      },
+      capacity: {
+        maxAttendees: 60
+      }
+    },
+    ...events
+  ];
 
   const [manualTicketId, setManualTicketId] = useState('');
 
@@ -182,6 +203,20 @@ export default function AdminDashboard() {
         }
       } else {
         alert(`Error: Invalid Ticket ID "${cleanId}"!`);
+        return;
+      }
+    }
+
+    // Verify if ticket belongs to the selected event
+    const ticketEventId = ticket.eventId || 'main';
+    if (selectedEventId !== 'all' && ticketEventId !== selectedEventId) {
+      const activeEvent = allEvents.find(e => e.id === selectedEventId);
+      const ticketEvent = allEvents.find(e => e.id === ticketEventId);
+      const activeEventName = activeEvent ? activeEvent.name : 'the selected event';
+      const ticketEventName = ticketEvent ? ticketEvent.name : 'another event';
+      
+      if (!window.confirm(`Warning: This ticket is registered for "${ticketEventName}", but you are checking in for "${activeEventName}". Do you want to proceed with check-in?`)) {
+        stopCameraScan();
         return;
       }
     }
@@ -375,21 +410,31 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url);
   };
 
-  // Compute metrics
-  const total = tickets.length;
-  const checked = tickets.filter(t => t.status === 'checked-in').length;
+  // Filter tickets by active dashboard event
+  const activeEventTickets = tickets.filter(t => {
+    if (selectedEventId === 'all') return true;
+    const ticketEventId = t.eventId || 'main';
+    return ticketEventId === selectedEventId;
+  });
+
+  // Compute metrics for active dashboard
+  const total = activeEventTickets.length;
+  const checked = activeEventTickets.filter(t => t.status === 'checked-in').length;
   const pending = total - checked;
   const revenue = total * 399;
   const attendanceRate = total > 0 ? ((checked / total) * 100).toFixed(1) : '0';
 
-  // Filtered tickets
+  // Filtered tickets (Search + Filters + Event selection)
   const filteredTickets = tickets.filter(t => {
+    const ticketEventId = t.eventId || 'main';
+    const matchesEvent = selectedEventId === 'all' || ticketEventId === selectedEventId;
+    
     const query = searchFilter.toLowerCase();
     const matchesSearch = t.email.toLowerCase().includes(query) || t.id.toLowerCase().includes(query);
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     const approval = t.approval || 'approved';
     const matchesApproval = approvalFilter === 'all' || approval === approvalFilter;
-    return matchesSearch && matchesStatus && matchesApproval;
+    return matchesEvent && matchesSearch && matchesStatus && matchesApproval;
   });
 
   if (loading) {
@@ -410,6 +455,65 @@ export default function AdminDashboard() {
               Create Event
             </Link>
           </div>
+        </div>
+
+        {/* Active Dashboard Selector */}
+        <div className="admin-event-filter-bar" style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'var(--bg-info-card)',
+          border: '1px solid var(--border-card)',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Active Dashboard:
+            </span>
+            <select 
+              value={selectedEventId} 
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="form-control"
+              style={{
+                width: 'auto', 
+                minWidth: '240px', 
+                cursor: 'pointer', 
+                padding: '0.4rem 2rem 0.4rem 0.75rem', 
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-input)',
+                borderRadius: '0.5rem',
+                background: 'var(--bg-primary)'
+              }}
+            >
+              <option value="all">🌐 All Events Combined</option>
+              {allEvents.map(evt => (
+                <option key={evt.id} value={evt.id}>
+                  📅 {evt.name || 'Untitled Event'}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {selectedEventId !== 'all' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', background: 'rgba(90, 154, 142, 0.1)', color: 'var(--brand-primary)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontWeight: 600 }}>
+                Filtering Active Dashboard
+              </span>
+              <button 
+                onClick={() => setSelectedEventId('all')} 
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid var(--border-card)' }}
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
         </div>
         
         <div className="admin-stats-row" style={{marginBottom: '0.5rem'}}>
@@ -453,25 +557,42 @@ export default function AdminDashboard() {
             <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Manage Events</h3>
           </div>
           <div className="events-grid" style={{marginTop: 0}}>
-            {events.length === 0 ? (
-              <div className="event-card">
-                <div className="event-card-banner">
-                  <img src="/ebc_meetup_banner.jpg" alt="Event Banner" />
-                </div>
-                <h4 className="event-card-title">Ebc 28th Meetup (Default)</h4>
-                <div className="event-card-detail">14/06/2026</div>
-                <div className="event-card-detail">Capacity: 60</div>
-                <div className="event-card-actions">
-                  <Link to="/create-event?id=main" className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
-                  <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent('main')}>Delete</button>
-                </div>
-              </div>
-            ) : (
-              events.map(evt => (
-                <div className="event-card" key={evt.id}>
+            {allEvents.map(evt => {
+              const isSelected = selectedEventId === evt.id;
+              return (
+                <div 
+                  className={`event-card ${isSelected ? 'active-event-card' : ''}`} 
+                  key={evt.id}
+                  onClick={() => setSelectedEventId(isSelected ? 'all' : evt.id)}
+                  style={{
+                    cursor: 'pointer',
+                    border: isSelected ? '2px solid var(--brand-primary)' : '1px solid var(--border-card)',
+                    boxShadow: isSelected ? '0 4px 12px rgba(90, 154, 142, 0.15)' : 'none',
+                    transform: isSelected ? 'scale(1.01)' : 'none',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    background: isSelected ? 'var(--bg-info-card)' : 'var(--bg-card)'
+                  }}
+                >
+                  {isSelected && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '0.5rem',
+                      right: '0.5rem',
+                      background: 'var(--brand-primary)',
+                      color: '#ffffff',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '0.25rem',
+                      zIndex: 10
+                    }}>
+                      ✓ Tracking
+                    </span>
+                  )}
                   {evt.bannerUrl ? (
                     <div className="event-card-banner">
-                      <img src={evt.bannerUrl} alt="Event Banner" />
+                      <img src={evt.bannerUrl.startsWith('http') || evt.bannerUrl.startsWith('/') ? evt.bannerUrl : `/${evt.bannerUrl}`} alt="Event Banner" />
                     </div>
                   ) : (
                     <div className="event-card-banner-placeholder"></div>
@@ -479,13 +600,13 @@ export default function AdminDashboard() {
                   <h4 className="event-card-title">{evt.name || 'Untitled Event'}</h4>
                   <div className="event-card-detail">{evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}</div>
                   <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited'}</div>
-                  <div className="event-card-actions">
+                  <div className="event-card-actions" onClick={e => e.stopPropagation()}>
                     <Link to={`/create-event?id=${evt.id}`} className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
                     <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
                   </div>
                 </div>
-              ))
-            )}
+              );
+            })}
           </div>
         </div>
 
