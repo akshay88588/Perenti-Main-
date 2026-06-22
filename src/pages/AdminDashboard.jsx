@@ -572,7 +572,7 @@ export default function AdminDashboard() {
                       {q.required && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 600}}> *Required</span>}
                       {q.options && <><br/><span style={{color: 'var(--text-secondary)', fontSize: '0.75rem'}}>Options: {q.options}</span></>}
                     </div>
-                    <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.2rem 0.5rem', fontSize: '0.7rem', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2'}} onClick={() => handleDeleteQuestion(idx)}>Delete</button>
+                    <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.2rem 0.5rem', fontSize: '0.7rem', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', whiteSpace: 'nowrap', flexShrink: 0}} onClick={() => handleDeleteQuestion(idx)}>Delete</button>
                   </div>
                 ))}
               </div>
@@ -722,7 +722,9 @@ export default function AdminDashboard() {
               {selectedTicket.answers && Object.keys(selectedTicket.answers).length > 0 ? (
                 <div style={{marginTop: '1rem', borderTop: '1px solid var(--divider)', paddingTop: '1rem'}}>
                   <h4 style={{fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-main)', fontFamily: '"Outfit", sans-serif'}}>Attendee Registration Answers</h4>
-                  {Object.entries(selectedTicket.answers).map(([key, value]) => (
+                  {Object.entries(selectedTicket.answers)
+                    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                    .map(([key, value]) => (
                     <div key={key} style={{marginBottom: '0.75rem', background: 'var(--bg-info-card)', padding: '0.6rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-card)'}}>
                       <p style={{fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.15rem', textTransform: 'uppercase', letterSpacing: '0.02em'}}>{key}</p>
                       <p style={{fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500, wordBreak: 'break-word', whiteSpace: 'pre-wrap', margin: 0}}>{value || 'No answer provided.'}</p>

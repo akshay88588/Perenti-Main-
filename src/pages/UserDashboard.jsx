@@ -154,7 +154,14 @@ export default function UserDashboard() {
           <div className="tickets-scroll-container" id="hub-tickets-container">
             {tickets.map((t, idx) => {
               // Look up the event this ticket belongs to
-              const event = t.eventId ? eventsMap[t.eventId] : null;
+              let event = t.eventId ? eventsMap[t.eventId] : null;
+              if (!event && t.eventId === 'main') {
+                event = {
+                  name: 'Ebc 28th Meetup (Default)',
+                  startDate: '2026-06-14T09:00',
+                  venue: { name: 'Birch Cafe', address: 'Vanasthalipuram, Hyderabad' }
+                };
+              }
 
               // Fallback event name: use stored eventName field, or 'Unknown Event'
               const eventName = event?.name || t.eventName || 'Unknown Event';
@@ -215,7 +222,9 @@ export default function UserDashboard() {
                       {t.answers && Object.keys(t.answers).length > 0 && (
                         <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
                           <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
-                          {Object.entries(t.answers).map(([key, value]) => (
+                          {Object.entries(t.answers)
+                            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                            .map(([key, value]) => (
                             <div key={key} style={{marginBottom: '0.5rem'}}>
                               <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
                               <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
