@@ -753,7 +753,7 @@ export default function AdminDashboard() {
                           <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         </div>
                         {q.options && (
-                          <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                          <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                             Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
                           </div>
                         )}
@@ -784,36 +784,38 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
-              <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+              <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
                 <h4 style={{fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Add New Question</h4>
-                <div className="form-group" style={{margin: 0}}>
-                  <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem'}}>Question Label</label>
-                  <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} placeholder="e.g. Diet Preferences" />
-                </div>
-                <div className="form-group" style={{margin: 0}}>
-                  <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem'}}>Type</label>
-                  <select className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
-                    <option value="text">Short Text</option>
-                    <option value="textarea">Long Text</option>
-                    <option value="radio">Multiple Choice (Radio)</option>
-                    <option value="select">Dropdown</option>
-                    <option value="toggle">Yes/No Toggle</option>
-                  </select>
-                </div>
-                {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
-                  <div className="form-group" style={{margin: 0}}>
-                    <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem'}}>Options (comma separated)</label>
-                    <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Vegetarian,Vegan,Gluten-free" />
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                  <div className="form-group" style={{margin: 0, gap: '0.35rem'}}>
+                    <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Question Label</label>
+                    <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} placeholder="e.g. Diet Preferences" />
                   </div>
-                )}
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                  <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
-                  <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Required Question</label>
+                  <div className="form-group" style={{margin: 0, gap: '0.35rem'}}>
+                    <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Type</label>
+                    <select className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
+                      <option value="text">Short Text</option>
+                      <option value="textarea">Long Text</option>
+                      <option value="radio">Multiple Choice (Radio)</option>
+                      <option value="select">Dropdown</option>
+                      <option value="toggle">Yes/No Toggle</option>
+                    </select>
+                  </div>
+                  {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
+                    <div className="form-group" style={{margin: 0, gap: '0.35rem'}}>
+                      <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Options (comma separated)</label>
+                      <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Vegetarian,Vegan,Gluten-free" />
+                    </div>
+                  )}
+                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                    <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                    <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Required Question</label>
+                  </div>
+                  <button type="button" className="btn btn-secondary btn-sm" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Question
+                  </button>
                 </div>
-                <button type="button" className="btn btn-secondary btn-sm" style={{marginTop: '0.25rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  Add Question
-                </button>
               </div>
               <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleSaveFormConfig} style={{width: '100%'}}>Save Form Configuration</button>
             </div>
