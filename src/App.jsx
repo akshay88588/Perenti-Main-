@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -13,22 +13,16 @@ import { isConfigured } from './config/firebase';
 
 import './App.css';
 
-function App() {
-  if (!isConfigured) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem', textAlign: 'center' }}>
-        <h1 style={{ color: 'var(--brand-primary)', marginBottom: '1rem' }}>Setup Required</h1>
-        <p style={{ maxWidth: '600px', lineHeight: '1.6', color: 'var(--text-main)' }}>
-          Firebase is not configured. The application needs a <code>.env</code> file with valid Firebase credentials to run.
-          Please rename <code>.env.example</code> to <code>.env</code> and fill in your Firebase project details, then restart the development server.
-        </p>
-      </div>
-    );
-  }
+// Routes that render their own custom header — suppress the global one there
+const ROUTES_WITH_OWN_HEADER = ['/create-event'];
+
+function AppContent() {
+  const location = useLocation();
+  const hideGlobalHeader = ROUTES_WITH_OWN_HEADER.includes(location.pathname);
 
   return (
     <>
-      <Header />
+      {!hideGlobalHeader && <Header />}
       <Routes>
         {/* Homepage: events list OR event detail (via ?eventId=) */}
         <Route path="/" element={
@@ -66,6 +60,22 @@ function App() {
       </Routes>
     </>
   );
+}
+
+function App() {
+  if (!isConfigured) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem', textAlign: 'center' }}>
+        <h1 style={{ color: 'var(--brand-primary)', marginBottom: '1rem' }}>Setup Required</h1>
+        <p style={{ maxWidth: '600px', lineHeight: '1.6', color: 'var(--text-main)' }}>
+          Firebase is not configured. The application needs a <code>.env</code> file with valid Firebase credentials to run.
+          Please rename <code>.env.example</code> to <code>.env</code> and fill in your Firebase project details, then restart the development server.
+        </p>
+      </div>
+    );
+  }
+
+  return <AppContent />;
 }
 
 export default App;
