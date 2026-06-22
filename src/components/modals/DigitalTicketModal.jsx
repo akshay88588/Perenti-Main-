@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function DigitalTicketModal({ show, onClose, ticketIds, email, eventName }) {
+export default function DigitalTicketModal({ show, onClose, ticketIds, email, eventName, paymentMethod = 'offline' }) {
   if (!show || !ticketIds || ticketIds.length === 0) return null;
 
   const qty = ticketIds.length;
@@ -44,7 +44,9 @@ export default function DigitalTicketModal({ show, onClose, ticketIds, email, ev
                       {ticketId}
                     </p>
                     <p style={{fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0}}>
-                      Status: <span style={{color: '#d97706', fontWeight: 600}}>Unused (Offline Payment)</span>
+                      Status: <span style={{color: paymentMethod === 'online' ? '#059669' : '#d97706', fontWeight: 600}}>
+                        {paymentMethod === 'online' ? 'Paid (Online)' : 'Unused (Offline Payment)'}
+                      </span>
                     </p>
                   </div>
                 </div>

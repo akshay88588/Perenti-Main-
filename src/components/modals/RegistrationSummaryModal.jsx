@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useRazorpay } from '../../hooks/useRazorpay';
 
 export default function RegistrationSummaryModal({
   show, onClose, qty, setQty, ticketsRemaining, onCheckout
@@ -22,7 +23,25 @@ export default function RegistrationSummaryModal({
     return { subtotal, discount, afterDiscount, fees, gst, total };
   }, [qty, promoApplied]);
 
+  const { initiatePayment, paymentStatus, error } = useRazorpay();
+
   if (!show) return null;
+
+  const handleOnlinePayment = () => {
+    // amount in paise (1 INR = 100 paise)
+    const amountInPaise = Math.round(calculations.total * 100);
+    initiatePayment(
+      amountInPaise, 
+      (paymentDetails) => {
+        // Success
+        onCheckout(qty, calculations.total, 'online', paymentDetails.paymentId);
+      },
+      () => {
+        // Cancelled
+        console.log('Payment cancelled by user');
+      }
+    );
+  };
 
   const handleApplyPromo = () => {
     if (promoCode.trim().toUpperCase() === 'EBC10') {
@@ -124,19 +143,41 @@ export default function RegistrationSummaryModal({
 
           {/* Payment Notice */}
           <div style={{
-            background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '0.5rem',
-            padding: '0.75rem', fontSize: '0.8rem', color: '#92400e', marginBottom: '1.25rem',
+            background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '0.5rem',
+            padding: '0.75rem', fontSize: '0.8rem', color: '#065f46', marginBottom: '1.25rem',
             display: 'flex', alignItems: 'flex-start', gap: '0.5rem'
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink: 0, marginTop: '0.1rem'}}>
-              <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
-            <span>This event uses <strong>Offline Payment</strong>. Your tickets will be reserved now. Please settle the amount at the venue counter.</span>
+            <span>Secure online payment powered by <strong>Razorpay</strong>.</span>
           </div>
 
-          <button type="button" className="btn btn-primary btn-block btn-lg" id="btn-summary-checkout" onClick={() => onCheckout(qty, calculations.total)}>
-            Reserve {qty} Ticket{qty > 1 ? 's' : ''} — ₹{calculations.total.toFixed(2)}
-          </button>
+          {error && (
+            <div style={{color: '#ef4444', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center'}}>
+              {error}
+            </div>
+          )}
+
+          <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
+            <button 
+              type="button" 
+              className="btn btn-primary btn-block btn-lg" 
+              onClick={handleOnlinePayment}
+              disabled={paymentStatus === 'processing'}
+              style={{position: 'relative'}}
+            >
+              {paymentStatus === 'processing' ? 'Processing...' : `Pay ₹${calculations.total.toFixed(2)} Securely`}
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-outline btn-block" 
+              onClick={() => onCheckout(qty, calculations.total, 'offline', null)}
+              disabled={paymentStatus === 'processing'}
+            >
+              Skip and Pay at Venue
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { db } from '../config/firebase';
 import { sendEmailJSTicket } from '../utils/emailjs';
 
 export function useBookTickets() {
-  const bookTicketsForUser = useCallback(async (email, qty, ticketsRemaining, updateTicketsRemaining, answers = {}, eventId = null, eventName = null, eventDetails = null) => {
+  const bookTicketsForUser = useCallback(async (email, qty, ticketsRemaining, updateTicketsRemaining, answers = {}, eventId = null, eventName = null, eventDetails = null, paymentMethod = 'offline', razorpayPaymentId = null) => {
     const ticketIdsGenerated = [];
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const timestamp = new Date().toLocaleString();
@@ -37,12 +37,13 @@ export function useBookTickets() {
         email: email,
         qty: qty,
         status: 'unused',
-        payment: 'offline',
+        payment: paymentMethod,
         timestamp: timestamp,
         approval: 'approved',
         answers: answers,
         ...(eventId ? { eventId } : {}),
         ...(resolvedEventName ? { eventName: resolvedEventName } : {}),
+        ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
       };
 
       try {

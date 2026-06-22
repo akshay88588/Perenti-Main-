@@ -48,6 +48,7 @@ export default function HomePage() {
   const [showSummary, setShowSummary] = useState(false);
   const [showDigitalTicket, setShowDigitalTicket] = useState(false);
   const [generatedTicketIds, setGeneratedTicketIds] = useState([]);
+  const [lastPaymentMethod, setLastPaymentMethod] = useState('offline');
   const [toastMessage, setToastMessage] = useState('');
 
   // Load all events for the listing view
@@ -151,12 +152,13 @@ export default function HomePage() {
     setShowSummary(true);
   };
 
-  const handleCheckout = async (finalQty, finalTotal) => {
+  const handleCheckout = async (finalQty, finalTotal, paymentMethod = 'offline', paymentId = null) => {
     setShowSummary(false);
     try {
       const answers = JSON.parse(sessionStorage.getItem('currentBookingAnswers') || '{}');
-      const ticketIds = await bookTicketsForUser(session.email, finalQty, ticketsRemaining, updateTicketsRemaining, answers, eventId, selectedEvent?.name || null);
+      const ticketIds = await bookTicketsForUser(session.email, finalQty, ticketsRemaining, updateTicketsRemaining, answers, eventId, selectedEvent?.name || null, selectedEvent, paymentMethod, paymentId);
       setGeneratedTicketIds(ticketIds);
+      setLastPaymentMethod(paymentMethod);
       setShowDigitalTicket(true);
       sessionStorage.removeItem('currentBookingAnswers');
     } catch (error) {
@@ -385,7 +387,7 @@ export default function HomePage() {
         <CheckoutLoginModal show={showCheckoutLogin} onClose={() => setShowCheckoutLogin(false)} qty={qty} onLoginSuccess={() => { setShowCheckoutLogin(false); setShowQuestions(true); }} />
         <RegistrationQuestionsModal show={showQuestions} onClose={() => setShowQuestions(false)} onSubmit={handleQuestionsSubmit} />
         <RegistrationSummaryModal show={showSummary} onClose={() => setShowSummary(false)} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} />
-        <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/my-tickets'); }} ticketIds={generatedTicketIds} email={session?.email} eventName={selectedEvent?.name} />
+        <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/my-tickets'); }} ticketIds={generatedTicketIds} email={session?.email} eventName={selectedEvent?.name} paymentMethod={lastPaymentMethod} />
         <AttendeeProfileModal show={selectedAttendee !== null} onClose={() => setSelectedAttendee(null)} attendee={selectedAttendee} />
         <Toast message={toastMessage} onClose={() => setToastMessage('')} />
       </main>
