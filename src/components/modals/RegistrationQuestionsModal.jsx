@@ -46,7 +46,7 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit, ev
   };
 
   const formatPlaceholder = (label) => {
-    let cleanLabel = label.replace(/\s*\([Oo]ptional\)/g, '');
+    let cleanLabel = label.replace(/\s*\([Oo]ptional\)/gi, '');
     if (cleanLabel.toLowerCase() === 'personal website') {
       cleanLabel = 'Personal Website URL';
     }
@@ -59,7 +59,8 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit, ev
     for (const q of formConfig) {
       const isRequired = q.required === true || q.required === 'true';
       if (isRequired && (!answers[q.label] || String(answers[q.label]).trim() === '')) {
-        alert(`Please answer: "${q.label}"`);
+        const cleanLabel = q.label.replace(/\s*\([Oo]ptional\)/gi, '');
+        alert(`Please answer the required field: "${cleanLabel}"`);
         return;
       }
     }
@@ -81,10 +82,11 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit, ev
           <form id="dynamic-questions-form" onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
             {formConfig.map((q) => {
               const isRequired = q.required === true || q.required === 'true';
+              const cleanLabel = q.label.replace(/\s*\([Oo]ptional\)/gi, '');
               return (
                 <div className="form-group" key={q.id} style={{margin: 0}}>
                   <label className="form-label" style={{fontSize: '0.85rem'}}>
-                    {q.label.replace(/\s*\([Oo]ptional\)/g, '')} {isRequired && <span style={{color: '#ef4444'}}>*</span>}
+                    {cleanLabel} {isRequired && <span style={{color: '#ef4444'}}>*</span>}
                   </label>
 
                   {q.type === 'text' && (
