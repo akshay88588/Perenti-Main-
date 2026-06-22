@@ -71,7 +71,7 @@ export default function CreateEventPage() {
     ];
   });
 
-  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: false });
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
 
   const handleAddQuestion = () => {
     if (!newQuestion.label.trim()) {
@@ -85,7 +85,7 @@ export default function CreateEventPage() {
 
     const id = 'q-custom-' + Date.now();
     setCustomRegistrationFields(prev => [...prev, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
-    setNewQuestion({ label: '', type: 'text', options: '', required: false });
+    setNewQuestion({ label: '', type: 'text', options: '', required: true });
   };
 
   const handleDeleteQuestion = (index) => {
@@ -260,12 +260,22 @@ export default function CreateEventPage() {
             );
             finalBannerUrl = await getDownloadURL(snapshot.ref);
           } else {
-            console.warn("Firebase Storage is not configured. Proceeding without image upload.");
+            throw new Error("Storage not configured");
           }
         } catch (uploadErr) {
-          console.warn("Banner upload failed. Proceeding with existing or empty image.", uploadErr);
-          if (!formData.bannerUrl && originalBannerUrl) {
-            finalBannerUrl = originalBannerUrl;
+          console.warn("Banner upload failed or storage offline. Converting to base64 Data URL fallback:", uploadErr);
+          try {
+            finalBannerUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = (e) => reject(e);
+              reader.readAsDataURL(bannerFile);
+            });
+          } catch (readErr) {
+            console.error("FileReader base64 conversion failed:", readErr);
+            if (!formData.bannerUrl && originalBannerUrl) {
+              finalBannerUrl = originalBannerUrl;
+            }
           }
         }
       } else if (!formData.bannerUrl && originalBannerUrl) {
