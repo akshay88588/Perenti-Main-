@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { signInAnonymously } from "firebase/auth";
 import { db, storage, auth } from '../config/firebase';
@@ -179,16 +179,16 @@ export default function CreateEventPage() {
           mapsLink: formData.mapsLink.trim(),
         },
         capacity: {
-          maxAttendees: parseInt(formData.maxAttendees, 10),
+          maxAttendees: parseInt(formData.maxAttendees, 10) || 0,
           waitlistEnabled: formData.waitlistEnabled
         },
         createdBy: session.email,
         status: 'active'
       };
 
-      if (isEditMode && editId !== 'main') {
+      if (isEditMode && editId) {
         const eventRef = doc(db, 'events', editId);
-        await updateDoc(eventRef, { ...eventData, createdAt: serverTimestamp() });
+        await setDoc(eventRef, { ...eventData, updatedAt: serverTimestamp() }, { merge: true });
       } else {
         const eventsRef = collection(db, 'events');
         await addDoc(eventsRef, { ...eventData, createdAt: serverTimestamp() });
@@ -259,7 +259,7 @@ export default function CreateEventPage() {
 
             <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
               <label className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Event Banner (Upload OR URL)</label>
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+              <div className="responsive-grid-2-col">
                 <input type="file" id="evt-banner-file" className="form-control" accept="image/*" style={{width: '100%', padding: '0.55rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} title="Upload Image" onChange={handleFileChange} />
                 <input type="url" id="evt-banner-url" name="bannerUrl" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} placeholder="Or paste image URL here" value={formData.bannerUrl} onChange={handleChange} />
               </div>
@@ -285,7 +285,7 @@ export default function CreateEventPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               Date & Time
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div className="responsive-grid-2-col">
               <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
                 <label htmlFor="evt-start" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Start Date & Time <span style={{color: '#ef4444'}}>*</span></label>
                 <input type="datetime-local" id="evt-start" name="startDate" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} required value={formData.startDate} onChange={handleChange} />
@@ -325,7 +325,7 @@ export default function CreateEventPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               Capacity
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div className="responsive-grid-2-col">
               <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
                 <label htmlFor="evt-capacity" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Maximum Attendees <span style={{color: '#ef4444'}}>*</span></label>
                 <input type="number" id="evt-capacity" name="maxAttendees" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} required min="1" placeholder="e.g. 100" value={formData.maxAttendees} onChange={handleChange} />

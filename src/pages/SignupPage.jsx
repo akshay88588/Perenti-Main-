@@ -55,7 +55,9 @@ export default function SignupPage() {
       login(user.email, role);
 
       if (redirectQty && parseInt(redirectQty) > 0) {
-        await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, {}, eventId, eventName);
+        const savedAnswers = JSON.parse(sessionStorage.getItem('currentBookingAnswers') || '{}');
+        await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, savedAnswers, eventId, eventName);
+        sessionStorage.removeItem('currentBookingAnswers');
         navigate('/user-dashboard');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;

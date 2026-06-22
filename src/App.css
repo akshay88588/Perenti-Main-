@@ -3273,3 +3273,41 @@ body {
 .btn-action-reject:active {
   transform: translateY(0);
 }
+
+/* ==========================================================================
+   Responsive 2-Column Grid (used for Create Event form)
+   ========================================================================== */
+.responsive-grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 600px) {
+  .responsive-grid-2-col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ==========================================================================
+   Danger Button (used for Delete action)
+   ========================================================================== */
+.btn-danger {
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+}
+
+.btn-danger:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.btn-danger.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}

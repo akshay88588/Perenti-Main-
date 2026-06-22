@@ -463,7 +463,7 @@ export default function AdminDashboard() {
                 <div className="event-card-detail">Capacity: 60</div>
                 <div className="event-card-actions">
                   <Link to="/create-event?id=main" className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
-                  <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent('main')}>Delete</button>
+                  <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent('main')}>Delete</button>
                 </div>
               </div>
             ) : (
@@ -474,14 +474,14 @@ export default function AdminDashboard() {
                       <img src={evt.bannerUrl} alt="Event Banner" />
                     </div>
                   ) : (
-                    <div className="event-card-banner-placeholder">No Image</div>
+                    <div className="event-card-banner-placeholder"></div>
                   )}
                   <h4 className="event-card-title">{evt.name || 'Untitled Event'}</h4>
                   <div className="event-card-detail">{evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}</div>
                   <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited'}</div>
                   <div className="event-card-actions">
                     <Link to={`/create-event?id=${evt.id}`} className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
-                    <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
+                    <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
                   </div>
                 </div>
               ))

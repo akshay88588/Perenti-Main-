@@ -78,22 +78,49 @@ export default function HomePage() {
     const loadEventDetail = async () => {
       setEventLoading(true);
       try {
+        let foundEvent = null;
+
+        // Try Firestore first
         const docRef = doc(db, 'events', eventId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setSelectedEvent({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          // fallback: find in already-loaded list
-          const found = events.find(e => e.id === eventId);
-          setSelectedEvent(found || null);
+          foundEvent = { id: docSnap.id, ...docSnap.data() };
         }
-        // Load attendees for this event
+
+        // Fallback: check already-loaded events list
+        if (!foundEvent) {
+          const found = events.find(e => e.id === eventId);
+          if (found) foundEvent = found;
+        }
+
+        // Fallback for the 'main' default event
+        if (!foundEvent && eventId === 'main') {
+          foundEvent = {
+            id: 'main',
+            name: 'Ebc 28th Meetup (Default)',
+            description: 'Join us at the Ebc 28th meetup, where aspiring founders, business owners, professionals, and students can share their stories.',
+            bannerUrl: '/ebc_meetup_banner.jpg',
+            category: 'Networking',
+            startDate: '2026-06-14T09:00',
+            endDate: '2026-06-14T11:00',
+            venue: { name: 'Birch Cafe', address: 'Vanasthalipuram, Hyderabad', mapsLink: '' },
+            capacity: { maxAttendees: 60, waitlistEnabled: false },
+            status: 'active'
+          };
+        }
+
+        setSelectedEvent(foundEvent);
+
+        // Load attendees filtered by this event
         const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
         const list = [];
         ticketsSnapshot.forEach((t) => {
           const data = t.data();
           if (data.approval !== 'rejected') {
-            list.push({ id: t.id, ...data });
+            // Show attendees for this event, or all if no eventId filter on ticket
+            if (!data.eventId || data.eventId === eventId) {
+              list.push({ id: t.id, ...data });
+            }
           }
         });
         setAttendees(list);

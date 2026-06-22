@@ -48,7 +48,9 @@ export default function LoginPage() {
       navigate('/admin-dashboard');
     } else {
       if (redirectQty && parseInt(redirectQty) > 0) {
-        await bookTicketsForUser(userEmail, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, {}, eventId, eventName);
+        const savedAnswers = JSON.parse(sessionStorage.getItem('currentBookingAnswers') || '{}');
+        await bookTicketsForUser(userEmail, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, savedAnswers, eventId, eventName);
+        sessionStorage.removeItem('currentBookingAnswers');
         navigate('/user-dashboard');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;
