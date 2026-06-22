@@ -54,6 +54,56 @@ export default function CreateEventPage() {
   const [bannerFile, setBannerFile] = useState(null);
   const [originalBannerUrl, setOriginalBannerUrl] = useState('');
 
+  const [customRegistrationFields, setCustomRegistrationFields] = useState(() => {
+    try {
+      const stored = localStorage.getItem('customRegistrationForm');
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    return [
+      { id: 'q-building', type: 'text', label: 'What are you building?', required: true },
+      { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
+      { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
+      { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
+      { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
+      { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
+      { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
+      { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
+    ];
+  });
+
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
+
+  const handleAddQuestion = () => {
+    if (!newQuestion.label.trim()) {
+      alert("Question Label is required!");
+      return;
+    }
+    if ((newQuestion.type === 'radio' || newQuestion.type === 'select') && !newQuestion.options.trim()) {
+      alert("Options are required for Multiple Choice or Dropdown!");
+      return;
+    }
+
+    const id = 'q-custom-' + Date.now();
+    setCustomRegistrationFields(prev => [...prev, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
+    setNewQuestion({ label: '', type: 'text', options: '', required: true });
+  };
+
+  const handleDeleteQuestion = (index) => {
+    setCustomRegistrationFields(prev => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  const handleToggleRequired = (index) => {
+    setCustomRegistrationFields(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], required: !updated[index].required };
+      return updated;
+    });
+  };
+
   useEffect(() => {
     if (!session || session.role !== 'admin') {
       navigate('/login');
@@ -110,7 +160,10 @@ export default function CreateEventPage() {
         });
         if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
         if (evt.customRegistrationFields) {
+          setCustomRegistrationFields(evt.customRegistrationFields);
           localStorage.setItem('customRegistrationForm', JSON.stringify(evt.customRegistrationFields));
+        } else {
+          setCustomRegistrationFields([]);
         }
       } else {
         // Try local storage fallback
@@ -133,7 +186,10 @@ export default function CreateEventPage() {
           });
           if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
           if (evt.customRegistrationFields) {
+            setCustomRegistrationFields(evt.customRegistrationFields);
             localStorage.setItem('customRegistrationForm', JSON.stringify(evt.customRegistrationFields));
+          } else {
+            setCustomRegistrationFields([]);
           }
         } else {
           setError("Event not found locally or in Firestore.");
@@ -204,40 +260,29 @@ export default function CreateEventPage() {
             );
             finalBannerUrl = await getDownloadURL(snapshot.ref);
           } else {
-            console.warn("Firebase Storage is not configured. Proceeding without image upload.");
+            throw new Error("Storage not configured");
           }
         } catch (uploadErr) {
-          console.warn("Banner upload failed. Proceeding with existing or empty image.", uploadErr);
-          if (!formData.bannerUrl && originalBannerUrl) {
-            finalBannerUrl = originalBannerUrl;
+          console.warn("Banner upload failed or storage offline. Converting to base64 Data URL fallback:", uploadErr);
+          try {
+            finalBannerUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = (e) => reject(e);
+              reader.readAsDataURL(bannerFile);
+            });
+          } catch (readErr) {
+            console.error("FileReader base64 conversion failed:", readErr);
+            if (!formData.bannerUrl && originalBannerUrl) {
+              finalBannerUrl = originalBannerUrl;
+            }
           }
         }
       } else if (!formData.bannerUrl && originalBannerUrl) {
         finalBannerUrl = originalBannerUrl;
       }
 
-      // Load custom registration form configuration to save with the event
-      let customRegistrationFields = [];
-      try {
-        const storedConfig = localStorage.getItem('customRegistrationForm');
-        if (storedConfig) {
-          customRegistrationFields = JSON.parse(storedConfig);
-        } else {
-          // Default ones
-          customRegistrationFields = [
-            { id: 'q-building', type: 'text', label: 'What are you building?', required: true },
-            { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
-            { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
-            { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
-            { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
-            { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
-            { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
-            { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
-          ];
-        }
-      } catch (e) {
-        console.warn("Failed to parse custom registration form configuration:", e);
-      }
+      // customRegistrationFields state is saved directly in eventData
 
       const eventData = {
         name: formData.name.trim(),
@@ -448,6 +493,100 @@ export default function CreateEventPage() {
                   <span className="toggle-slider"></span>
                 </label>
               </div>
+            </div>
+          </div>
+
+          <div className="form-section-card" style={{padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
+            <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+              Custom Registration Questions
+            </h2>
+            <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0}}>
+              Configure custom registration fields requested from attendees for this specific event.
+            </p>
+
+            <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem'}}>
+              {customRegistrationFields.map((q, idx) => (
+                <div key={q.id || idx} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
+                    <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap'}}>
+                        <strong style={{color: 'var(--text-main)'}}>{q.label.replace(/\s*\([Oo]ptional\)/g, '')}</strong>
+                        <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
+                        {(q.required === true || q.required === 'true') ? (
+                          <span style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>
+                        ) : (
+                          <span style={{color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Optional</span>
+                        )}
+                      </div>
+                      {q.options && (
+                        <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                          Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0}}>
+                    {/* Required Toggle */}
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                      <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.required === true || q.required === 'true') ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                        {(q.required === true || q.required === 'true') ? 'Required' : 'Optional'}
+                      </span>
+                      <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
+                        <input 
+                          type="checkbox" 
+                          checked={q.required === true || q.required === 'true'} 
+                          onChange={() => handleToggleRequired(idx)} 
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    {/* Delete button */}
+                    <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem'}}>
+              <h4 style={{fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', margin: 0}}>Add New Custom Question</h4>
+              
+              <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem'}}>
+                <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Question Label</label>
+                <input type="text" className="form-control" style={{fontSize: '0.85rem', width: '100%', padding: '0.5rem 0.75rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} placeholder="e.g. T-Shirt Size" />
+              </div>
+              
+              <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem'}}>
+                <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Question Type</label>
+                <select className="form-control" style={{fontSize: '0.85rem', width: '100%', padding: '0.5rem 0.75rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
+                  <option value="text">Short Text</option>
+                  <option value="textarea">Long Text</option>
+                  <option value="radio">Multiple Choice (Radio Buttons)</option>
+                  <option value="select">Dropdown List</option>
+                  <option value="toggle">Yes/No Switch</option>
+                </select>
+              </div>
+
+              {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
+                <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem'}}>
+                  <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Options (comma separated)</label>
+                  <input type="text" className="form-control" style={{fontSize: '0.85rem', width: '100%', padding: '0.5rem 0.75rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Small,Medium,Large" />
+                </div>
+              )}
+
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0'}}>
+                <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Is this question required?</label>
+              </div>
+
+              <button type="button" className="btn btn-secondary btn-sm" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Question to Event
+              </button>
             </div>
           </div>
 

@@ -40,14 +40,19 @@ export default function EventImage({ src, alt, className, style, aspectRatio, co
     );
   };
 
-  if (!src || error) {
+  let normalizedSrc = src;
+  if (src && !src.startsWith('http') && !src.startsWith('/') && !src.startsWith('data:')) {
+    normalizedSrc = `/${src}`;
+  }
+
+  if (!normalizedSrc || error) {
     return renderPlaceholder();
   }
 
   return (
     <div style={mergedContainerStyle}>
       <img
-        src={src}
+        src={normalizedSrc}
         alt={alt}
         className={className}
         style={{

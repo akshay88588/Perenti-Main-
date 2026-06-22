@@ -110,7 +110,7 @@ export default function AdminDashboard() {
 
   // Form Builder state
   const [formConfig, setFormConfig] = useState([]);
-  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: false });
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
 
   useEffect(() => {
     if (!session || session.role !== 'admin') {
@@ -411,7 +411,7 @@ export default function AdminDashboard() {
 
     const id = 'q-custom-' + Date.now();
     setFormConfig([...formConfig, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
-    setNewQuestion({ label: '', type: 'text', options: '', required: false });
+    setNewQuestion({ label: '', type: 'text', options: '', required: true });
   };
 
   const handleDeleteQuestion = (index) => {
@@ -644,7 +644,7 @@ export default function AdminDashboard() {
                   )}
                   <div className="event-card-banner">
                     <EventImage 
-                      src={evt.bannerUrl ? (evt.bannerUrl.startsWith('http') || evt.bannerUrl.startsWith('/') ? evt.bannerUrl : `/${evt.bannerUrl}`) : ''} 
+                      src={evt.bannerUrl || ''} 
                       alt="Event Banner" 
                       containerStyle={{ height: '140px' }}
                     />
@@ -747,8 +747,8 @@ export default function AdminDashboard() {
                       <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
                           <strong style={{color: 'var(--text-main)'}}>
-                            {q.label.replace(/\s*\([Oo]ptional\)/g, '')}
-                            {q.required && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
+                            {q.label.replace(/\s*\([Oo]ptional\)/gi, '')}
+                            {(q.required === true || q.required === 'true') && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
                           </strong>
                           <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         </div>
