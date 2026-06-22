@@ -96,8 +96,12 @@ app.post('/api/verify-payment', (req, res) => {
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // SPA fallback: serve index.html for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+app.use((req, res, next) => {
+  if (req.method === 'GET') {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  } else {
+    res.status(404).json({ error: 'Not Found' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;
