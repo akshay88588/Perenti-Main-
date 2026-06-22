@@ -1887,7 +1887,7 @@ h1, h2, h3, h4, h5, h6 {
 .admin-grid-layout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 @media (min-width: 768px) {
@@ -3151,7 +3151,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -3173,7 +3173,7 @@ body {
 .admin-stats-row {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -3309,7 +3309,7 @@ body {
   border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   word-break: break-word; /* Handle long text without spaces */
 }
 
@@ -3513,7 +3513,7 @@ body {
   border: 1px solid var(--border-card);
   border-radius: 0.75rem;
   padding: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
   gap: 1rem;
 }

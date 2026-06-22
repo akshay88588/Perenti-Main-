@@ -492,7 +492,7 @@ export default function AdminDashboard() {
           )}
         </div>
         
-        <div className="admin-stats-row" style={{marginBottom: '1.5rem'}}>
+        <div className="admin-stats-row" style={{marginBottom: '1.25rem'}}>
           <div className="admin-stat-box"><span className="stat-num">{total}</span><span className="stat-label">Total Registered</span></div>
           <div className="admin-stat-box"><span className="stat-num">{checked}</span><span className="stat-label">Checked In</span></div>
           <div className="admin-stat-box"><span className="stat-num">{pending}</span><span className="stat-label">Pending Check-in</span></div>
@@ -533,8 +533,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="admin-panel-box" style={{marginBottom: '1.5rem'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '0.5rem'}}>
+        <div className="admin-panel-box" style={{marginBottom: '1.25rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '1rem'}}>
             <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Manage Events</h3>
           </div>
           <div className="events-grid" style={{marginTop: 0}}>
@@ -659,7 +659,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
               <div>
                 <h3 className="admin-panel-title" style={{margin: '0 0 0.35rem 0'}}>Custom Registration Form</h3>
                 <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
