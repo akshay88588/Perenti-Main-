@@ -747,8 +747,13 @@ export default function AdminDashboard() {
                       <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
                           <strong style={{color: 'var(--text-main)'}}>
+<<<<<<< HEAD
                             {q.label.replace(/\s*\([Oo]ptional\)/gi, '')}
                             {(q.required === true || q.required === 'true') && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
+=======
+                            {q.label.replace(/\s*\([Oo]ptional\)/g, '')}
+                            {q.required && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
+>>>>>>> a55dcc18527167f5fa72996c749ff24ad12b4803
                           </strong>
                           <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         </div>
