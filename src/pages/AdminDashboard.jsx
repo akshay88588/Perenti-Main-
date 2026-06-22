@@ -541,7 +541,7 @@ export default function AdminDashboard() {
         )}
 
         <div className="admin-panel-box" style={{marginBottom: '1.25rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '1rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem'}}>
             <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Manage Events</h3>
           </div>
           <div className="events-grid" style={{marginTop: 0}}>
@@ -601,7 +601,7 @@ export default function AdminDashboard() {
         <div className="admin-grid-layout">
           <div id="admin-left-col">
             <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
-              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem'}}>
+              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '1rem'}}>
                 <h3 className="admin-panel-title" style={{margin: 0}}>QR Scanner</h3>
               </div>
               <div className="scanner-viewfinder" style={{width: '100%', aspectRatio: '4/3', position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', background: '#000'}}>
@@ -646,7 +646,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="admin-panel-box" style={{padding: '1rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '1rem'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem'}}>
                 <div style={{width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(90,154,142,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
                 </div>
@@ -668,8 +668,8 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
-              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem'}}>
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
+              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '1rem'}}>
                 <h3 className="admin-panel-title" style={{margin: 0}}>Custom Registration Form</h3>
               </div>
               <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
@@ -753,8 +753,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="admin-panel-box" id="admin-rsvp-box">
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.75rem'}}>
+          <div className="admin-panel-box" id="admin-rsvp-box" style={{paddingTop: '1rem', paddingBottom: '1rem'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem'}}>
               <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>RSVP & Registration Search</h3>
               <div className="view-tabs" style={{display: 'flex', gap: '0.25rem', background: 'var(--bg-info-card)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid var(--border-card)', marginLeft: 'auto'}}>
                 <button type="button" style={{fontSize: '0.75rem', padding: '0.35rem 0.75rem', border: 'none', borderRadius: '0.375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', background: activeTab === 'all' ? 'var(--brand-primary)' : 'transparent', color: activeTab === 'all' ? '#ffffff' : 'var(--text-secondary)'}} onClick={() => {setActiveTab('all'); setStatusFilter('all');}}>All Registrations</button>
