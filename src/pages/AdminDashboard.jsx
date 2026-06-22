@@ -659,29 +659,46 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="admin-panel-box">
-              <h3 className="admin-panel-title">Custom Registration Form</h3>
-              <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+              <div>
+                <h3 className="admin-panel-title" style={{margin: '0 0 0.35rem 0'}}>Custom Registration Form</h3>
+                <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
+              </div>
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
                 {formConfig.map((q, idx) => (
-                  <div key={q.id} style={{background: '#fff', border: '1px solid var(--border-card)', borderRadius: '0.375rem', padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'}}>
-                    <div style={{fontSize: '0.85rem'}}>
-                      <strong style={{color: 'var(--text-main)'}}>{q.label}</strong> <span style={{color: 'var(--text-muted)', fontSize: '0.75rem'}}>({q.type})</span>
-                      {q.required && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 600}}> *Required</span>}
-                      {q.options && <><br/><span style={{color: 'var(--text-secondary)', fontSize: '0.75rem'}}>Options: {q.options}</span></>}
+                  <div key={q.id} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s'}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
+                      {/* Drag icon placeholder */}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
+                      
+                      <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
+                          <strong style={{color: 'var(--text-main)'}}>{q.label}</strong>
+                          <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
+                          {q.required && <span style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>}
+                        </div>
+                        {q.options && (
+                          <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                            Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.2rem 0.5rem', fontSize: '0.7rem', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', whiteSpace: 'nowrap', flexShrink: 0}} onClick={() => handleDeleteQuestion(idx)}>Delete</button>
+                    
+                    <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', flexShrink: 0, borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
                   </div>
                 ))}
               </div>
-              <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                <h4 style={{fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem'}}>Add New Question</h4>
-                <div className="form-group">
-                  <label className="form-label" style={{fontSize: '0.8rem'}}>Question Label</label>
-                  <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} />
+              <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                <h4 style={{fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Add New Question</h4>
+                <div className="form-group" style={{margin: 0}}>
+                  <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem'}}>Question Label</label>
+                  <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} placeholder="e.g. Diet Preferences" />
                 </div>
-                <div className="form-group">
-                  <label className="form-label" style={{fontSize: '0.8rem'}}>Type</label>
+                <div className="form-group" style={{margin: 0}}>
+                  <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem'}}>Type</label>
                   <select className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
                     <option value="text">Short Text</option>
                     <option value="textarea">Long Text</option>
@@ -691,18 +708,21 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
-                  <div className="form-group">
-                    <label className="form-label" style={{fontSize: '0.8rem'}}>Options (comma separated)</label>
-                    <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} />
+                  <div className="form-group" style={{margin: 0}}>
+                    <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem'}}>Options (comma separated)</label>
+                    <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Vegetarian,Vegan,Gluten-free" />
                   </div>
                 )}
-                <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                  <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer'}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
-                  <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', cursor: 'pointer'}}>Required Question</label>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                  <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                  <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Required Question</label>
                 </div>
-                <button type="button" className="btn btn-secondary btn-sm" style={{marginTop: '0.5rem'}} onClick={handleAddQuestion}>+ Add Question</button>
+                <button type="button" className="btn btn-secondary btn-sm" style={{marginTop: '0.25rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  Add Question
+                </button>
               </div>
-              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleSaveFormConfig}>Save Form Configuration</button>
+              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleSaveFormConfig} style={{width: '100%'}}>Save Form Configuration</button>
             </div>
           </div>
 
