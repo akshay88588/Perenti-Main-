@@ -17,9 +17,9 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit }) 
           { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
           { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
           { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
-          { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL (Optional)', required: false },
-          { id: 'q-instagram', type: 'text', label: 'Instagram URL (Optional)', required: false },
-          { id: 'q-website', type: 'text', label: 'Personal Website (Optional)', required: false },
+          { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
+          { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
+          { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
           { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
         ];
       }
@@ -39,6 +39,14 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit }) 
 
   const handleChange = (label, value) => {
     setAnswers(prev => ({ ...prev, [label]: value }));
+  };
+
+  const formatPlaceholder = (label) => {
+    let cleanLabel = label.replace(/\s*\([Oo]ptional\)/g, '');
+    if (cleanLabel.toLowerCase() === 'personal website') {
+      cleanLabel = 'Personal Website URL';
+    }
+    return `Enter ${cleanLabel}`;
   };
 
   const handleSubmit = (e) => {
@@ -73,13 +81,13 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit }) 
                 </label>
 
                 {q.type === 'text' && (
-                  <input type="text" className="form-control" placeholder={`Enter ${q.label.toLowerCase()}`}
+                  <input type="text" className="form-control" placeholder={formatPlaceholder(q.label)}
                     value={answers[q.label] || ''} onChange={(e) => handleChange(q.label, e.target.value)}
                     required={q.required} />
                 )}
 
                 {q.type === 'textarea' && (
-                  <textarea className="form-control" rows="3" placeholder={`Enter ${q.label.toLowerCase()}`}
+                  <textarea className="form-control" rows="3" placeholder={formatPlaceholder(q.label)}
                     value={answers[q.label] || ''} onChange={(e) => handleChange(q.label, e.target.value)}
                     required={q.required} style={{fontFamily: 'inherit', resize: 'vertical'}} />
                 )}
