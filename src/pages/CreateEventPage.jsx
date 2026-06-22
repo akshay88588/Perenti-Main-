@@ -15,6 +15,14 @@ const promiseWithTimeout = (promise, ms, timeoutError) => {
 
 const isValidUrl = (urlString) => {
   if (!urlString) return true;
+  // Reject Windows-style local paths (e.g. C:\path or D:\path) or containing backslashes
+  if (/^[A-Za-z]:\\/.test(urlString) || urlString.includes('\\')) {
+    return false;
+  }
+  // Reject file:// protocol
+  if (urlString.startsWith('file://')) {
+    return false;
+  }
   if (urlString.startsWith('/') || (!urlString.includes('://') && (urlString.endsWith('.jpg') || urlString.endsWith('.png') || urlString.endsWith('.jpeg') || urlString.endsWith('.webp') || urlString.endsWith('.gif')))) {
     return true;
   }
@@ -24,6 +32,43 @@ const isValidUrl = (urlString) => {
   } catch (_) {
     return false;
   }
+};
+
+const compressImage = (file, maxWidth = 800, maxHeight = 600) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
 };
 
 export default function CreateEventPage() {
@@ -265,12 +310,7 @@ export default function CreateEventPage() {
         } catch (uploadErr) {
           console.warn("Banner upload failed or storage offline. Converting to base64 Data URL fallback:", uploadErr);
           try {
-            finalBannerUrl = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = (e) => reject(e);
-              reader.readAsDataURL(bannerFile);
-            });
+            finalBannerUrl = await compressImage(bannerFile);
           } catch (readErr) {
             console.error("FileReader base64 conversion failed:", readErr);
             if (!formData.bannerUrl && originalBannerUrl) {

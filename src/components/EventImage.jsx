@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function EventImage({ src, alt, className, style, aspectRatio, containerStyle = {} }) {
   const [error, setError] = useState(false);
+
+  // Reset error state whenever src changes so a new URL is always attempted
+  useEffect(() => {
+    setError(false);
+  }, [src]);
 
   const mergedContainerStyle = {
     width: '100%',
