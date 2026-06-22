@@ -137,21 +137,40 @@ export default function AdminDashboard() {
 
     const loadData = async () => {
       try {
-        const eventsSnapshot = await getDocs(collection(db, 'events'));
-        const eventsList = [];
-        eventsSnapshot.forEach((docSnap) => {
-          eventsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        setEvents(eventsList);
+        let eventsList = [];
+        let ticketsList = [];
 
-        const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
-        const ticketsList = [];
-        ticketsSnapshot.forEach((docSnap) => {
-          ticketsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        if (db) {
+          try {
+            const eventsSnapshot = await getDocs(collection(db, 'events'));
+            eventsSnapshot.forEach((docSnap) => {
+              eventsList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch events from Firestore, using localStorage fallback:", e);
+            eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          }
+
+          try {
+            const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
+            ticketsSnapshot.forEach((docSnap) => {
+              ticketsList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch tickets from Firestore:", e);
+          }
+        } else {
+          eventsList = JSON.parse(localStorage.getItem('events')) || [];
+        }
+
+        setEvents(eventsList);
         setTickets(ticketsList);
       } catch (error) {
         console.error("Error loading admin data:", error);
+        try {
+          const eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          setEvents(eventsList);
+        } catch (_) {}
       } finally {
         setLoading(false);
       }
@@ -727,10 +746,14 @@ export default function AdminDashboard() {
                       
                       <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
+<<<<<<< HEAD
                           <strong style={{color: 'var(--text-main)'}}>
                             {q.label}
                             {q.required && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
                           </strong>
+=======
+                          <strong style={{color: 'var(--text-main)'}}>{q.label.replace(/\s*\([Oo]ptional\)/g, '')}</strong>
+>>>>>>> 42474f48729caee169de1efb10bf905ce9553a77
                           <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         </div>
                         {q.options && (
