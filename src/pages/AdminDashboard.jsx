@@ -492,7 +492,7 @@ export default function AdminDashboard() {
           )}
         </div>
         
-        <div className="admin-stats-row" style={{marginBottom: '0.5rem'}}>
+        <div className="admin-stats-row" style={{marginBottom: '1.5rem'}}>
           <div className="admin-stat-box"><span className="stat-num">{total}</span><span className="stat-label">Total Registered</span></div>
           <div className="admin-stat-box"><span className="stat-num">{checked}</span><span className="stat-label">Checked In</span></div>
           <div className="admin-stat-box"><span className="stat-num">{pending}</span><span className="stat-label">Pending Check-in</span></div>
@@ -528,7 +528,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="admin-panel-box" style={{marginBottom: '0.5rem'}}>
+        <div className="admin-panel-box" style={{marginBottom: '1.5rem'}}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '0.5rem'}}>
             <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Manage Events</h3>
           </div>
@@ -587,7 +587,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="admin-grid-layout">
-          <div id="admin-left-col" style={{display: 'flex', flexDirection: 'column', gap: '2rem'}}>
+          <div id="admin-left-col">
             <div className="admin-panel-box">
               <h3 className="admin-panel-title">QR Scanner</h3>
               <div className="scanner-viewfinder" style={{width: '100%', aspectRatio: '4/3', position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', background: '#000'}}>
