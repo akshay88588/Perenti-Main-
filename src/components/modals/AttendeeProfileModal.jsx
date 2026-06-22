@@ -31,7 +31,7 @@ export default function AttendeeProfileModal({ show, onClose, attendee }) {
   const industry = answers['Industry'] || answers['industry'] || '';
   const linkedin = answers['LinkedIn URL (Optional)'] || answers['LinkedIn URL'] || answers['linkedin'] || '';
   const instagram = answers['Instagram URL (Optional)'] || answers['Instagram URL'] || answers['instagram'] || '';
-  const website = answers['Personal Website (Optional)'] || answers['Personal Website'] || answers['website'] || '';
+  const website = answers['Personal Website (Optional)'] || answers['Personal Website'] || answers['Personal Website URL'] || answers['website'] || '';
   const building = answers['What are you building?'] || answers['building'] || '';
 
   // Helper to ensure URL starts with protocol for external links

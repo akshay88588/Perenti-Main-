@@ -83,9 +83,9 @@ export default function AdminDashboard() {
         { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
         { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
         { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
-        { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL (Optional)', required: false },
-        { id: 'q-instagram', type: 'text', label: 'Instagram URL (Optional)', required: false },
-        { id: 'q-website', type: 'text', label: 'Personal Website (Optional)', required: false },
+        { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
+        { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
+        { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
         { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
       ]);
     }
