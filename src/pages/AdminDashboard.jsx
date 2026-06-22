@@ -504,7 +504,12 @@ export default function AdminDashboard() {
         {showSuccessOverlay && (
           <div id="checkin-success-overlay" className="visible" style={{display: 'flex', position: 'fixed', inset: 0, zIndex: 9999, alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.72)', backdropFilter: 'blur(6px)'}}>
             <div className="checkin-success-card" style={{background: '#ffffff', borderRadius: '1.5rem', padding: '2.5rem 2rem 1.75rem', maxWidth: '380px', width: '90%', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.45)', position: 'relative', overflow: 'hidden'}}>
-              <p className="checkin-success-title" style={{fontFamily: '"Outfit", sans-serif', fontSize: '1.75rem', fontWeight: 800, color: '#065f46'}}>Check-in Successful!</p>
+              <div className="checkin-success-icon" style={{width: '96px', height: '96px', margin: '0 auto 1.25rem', background: '#ecfdf5', border: '4px solid #10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <p className="checkin-success-title" style={{fontFamily: '"Outfit", sans-serif', fontSize: '1.75rem', fontWeight: 800, color: '#065f46', margin: '0 0 0.5rem 0'}}>Check-in Successful!</p>
               <p className="checkin-success-sub" style={{fontSize: '0.85rem', color: '#6b7280'}}>Attendee verified & admitted</p>
               <div>
                 <span className="checkin-detail-chip" style={{display: 'inline-block', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '999px', padding: '0.3rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, color: '#065f46', margin: '0.2rem 0.15rem', fontFamily: 'monospace'}}>{overlayDetails.email}</span>
@@ -588,8 +593,8 @@ export default function AdminDashboard() {
 
         <div className="admin-grid-layout">
           <div id="admin-left-col">
-            <div className="admin-panel-box">
-              <h3 className="admin-panel-title">QR Scanner</h3>
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
+              <h3 className="admin-panel-title" style={{margin: 0}}>QR Scanner</h3>
               <div className="scanner-viewfinder" style={{width: '100%', aspectRatio: '4/3', position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', background: '#000'}}>
                 <video ref={videoRef} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1, display: isScanning ? 'block' : 'none'}}></video>
                 <canvas ref={canvasRef} style={{display: 'none'}}></canvas>
@@ -621,12 +626,8 @@ export default function AdminDashboard() {
                 <div style={{fontSize: '0.7rem', fontFamily: 'monospace', color: '#333333'}}>{scanStatus}</div>
               </div>
               <div className="admin-manual-checkin">
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem'}}>
+                <div style={{marginBottom: '0.25rem'}}>
                   <span className="admin-label-small" style={{margin: 0}}>MANUAL TICKET CHECK-IN</span>
-                  <button className="btn btn-sm" style={{fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer'}} onClick={() => {
-                    const id = prompt("Enter Ticket ID to simulate scan:");
-                    if (id) processCheckIn(id);
-                  }}>🧪 Simulate Scan</button>
                 </div>
                 <div className="manual-checkin-row">
                   <input type="text" className="promo-textbox" placeholder="Enter Ticket ID" value={manualTicketId} onChange={e => setManualTicketId(e.target.value)} />
