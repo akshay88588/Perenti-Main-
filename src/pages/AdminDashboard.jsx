@@ -682,7 +682,7 @@ export default function AdminDashboard() {
                       
                       <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
-                          <strong style={{color: 'var(--text-main)'}}>{q.label}</strong>
+                          <strong style={{color: 'var(--text-main)'}}>{q.label.replace(/\s*\([Oo]ptional\)/g, '')}</strong>
                           <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                           {q.required && <span style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>}
                         </div>

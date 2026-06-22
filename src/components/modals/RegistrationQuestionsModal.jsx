@@ -77,7 +77,7 @@ export default function RegistrationQuestionsModal({ show, onClose, onSubmit }) 
             {formConfig.map((q) => (
               <div className="form-group" key={q.id} style={{margin: 0}}>
                 <label className="form-label" style={{fontSize: '0.85rem'}}>
-                  {q.label} {q.required && <span style={{color: '#ef4444'}}>*</span>}
+                  {q.label.replace(/\s*\([Oo]ptional\)/g, '')} {q.required && <span style={{color: '#ef4444'}}>*</span>}
                 </label>
 
                 {q.type === 'text' && (
