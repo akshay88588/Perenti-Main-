@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import EventImage from '../components/EventImage';
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
@@ -101,23 +102,8 @@ export default function EventsPage() {
                   }}
                 >
                   {/* Banner */}
-                  <div style={{ width: '100%', height: '180px', flexShrink: 0, overflow: 'hidden' }}>
-                    {evt.bannerUrl ? (
-                      <img src={evt.bannerUrl} alt={evt.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    ) : (
-                      <div style={{
-                        width: '100%', height: '100%',
-                        background: 'linear-gradient(135deg, var(--brand-primary) 0%, #3d7a6e 100%)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                      </div>
-                    )}
+                  <div style={{ width: '100%', height: '180px', flexShrink: 0, overflow: 'hidden', borderRadius: '0.875rem 0.875rem 0 0' }}>
+                    <EventImage src={evt.bannerUrl} alt={evt.name} containerStyle={{ height: '180px' }} />
                   </div>
 
                   {/* Card Body */}
