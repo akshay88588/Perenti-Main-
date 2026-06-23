@@ -131,8 +131,8 @@ export default function UserDashboard() {
             <p>Review your registration passes. Present the QR codes at the venue entrance.</p>
           </div>
           {tickets.length > 0 && (
-            <button type="button" className="btn btn-primary" onClick={handlePrint}>
-              Print All Tickets
+            <button type="button" className="btn btn-primary" onClick={handlePrint} style={{ padding: '0.85rem 1.5rem', minHeight: '3rem', fontSize: '1rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '0.5rem', boxShadow: 'var(--shadow-sm)' }}>
+              🖨️ Print All Tickets
             </button>
           )}
         </div>

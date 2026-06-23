@@ -171,9 +171,10 @@ export default function RegistrationSummaryModal({
             </button>
             <button 
               type="button" 
-              className="btn btn-outline btn-block" 
+              className="btn btn-outline btn-block btn-lg" 
               onClick={() => onCheckout(qty, calculations.total, 'offline', null)}
               disabled={paymentStatus === 'processing'}
+              style={{ fontWeight: 700 }}
             >
               Skip and Pay at Venue
             </button>

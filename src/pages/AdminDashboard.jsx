@@ -796,7 +796,7 @@ export default function AdminDashboard() {
                     <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
                       {/* Drag icon placeholder */}
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
-                      
+
                       <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
                           <strong style={{color: 'var(--text-main)'}}>
@@ -812,7 +812,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div style={{display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0}}>
                       {/* Required Toggle Switch */}
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
@@ -820,10 +820,10 @@ export default function AdminDashboard() {
                           {q.required ? 'Required' : 'Optional'}
                         </span>
                         <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
-                          <input 
-                            type="checkbox" 
-                            checked={!!q.required} 
-                            onChange={() => handleToggleRequired(idx)} 
+                          <input
+                            type="checkbox"
+                            checked={!!q.required}
+                            onChange={() => handleToggleRequired(idx)}
                           />
                           <span className="toggle-slider"></span>
                         </label>
