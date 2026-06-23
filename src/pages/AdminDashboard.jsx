@@ -704,7 +704,7 @@ export default function AdminDashboard() {
                   </div>
                   <h4 className="event-card-title">{evt.name || 'Untitled Event'}</h4>
                   <div className="event-card-detail">{evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}</div>
-                  <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited'}</div>
+                  <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? `${evt.capacity.maxAttendees} attendees` : 'Unlimited'}</div>
                   <div className="event-card-actions" onClick={e => e.stopPropagation()}>
                     <Link to={`/create-event?id=${evt.id}`} className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
                     <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
