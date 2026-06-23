@@ -962,7 +962,7 @@ export default function AdminDashboard() {
                               const name = user ? [user.firstName, user.lastName].filter(Boolean).join(' ') : '';
                               return (
                                 <button onClick={() => setSelectedTicket(t)} style={{background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, borderBottom: '1px dashed var(--brand-primary)', cursor: 'pointer'}}>
-                                  {name || t.email}
+                                  {name || '—'}
                                 </button>
                               );
                             })()}
