@@ -505,7 +505,18 @@ export default function AdminDashboard() {
   const total = activeEventTickets.length;
   const checked = activeEventTickets.filter(t => t.status === 'checked-in').length;
   const pending = total - checked;
-  const revenue = total * 399;
+  const activeEvent = allEvents.find(e => e.id === selectedEventId);
+  const defaultTicketPrice = 399;
+  const eventTicketPrice = (activeEvent && activeEvent.ticketPrice != null && activeEvent.ticketPrice >= 0)
+    ? activeEvent.ticketPrice
+    : defaultTicketPrice;
+  const revenue = selectedEventId === 'all'
+    ? activeEventTickets.reduce((sum, t) => {
+        const evt = allEvents.find(e => e.id === (t.eventId || 'main'));
+        const price = (evt && evt.ticketPrice != null && evt.ticketPrice >= 0) ? evt.ticketPrice : defaultTicketPrice;
+        return sum + price;
+      }, 0)
+    : total * eventTicketPrice;
   const attendanceRate = total > 0 ? ((checked / total) * 100).toFixed(1) : '0';
 
   // Filtered tickets (Search + Filters + Event selection)

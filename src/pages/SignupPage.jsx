@@ -106,7 +106,7 @@ export default function SignupPage() {
           )}
 
           <form className="modal-form" id="signup-form" onSubmit={handleSignup}>
-            <div style={{display: 'flex', gap: '1rem'}}>
+            <div className="signup-name-row">
               <div className="form-group" style={{flex: 1}}>
                 <label htmlFor="signup-first-name" className="form-label">First Name</label>
                 <input type="text" id="signup-first-name" className="form-control" required placeholder="John"

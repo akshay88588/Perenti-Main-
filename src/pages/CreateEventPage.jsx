@@ -93,7 +93,8 @@ export default function CreateEventPage() {
     address: '',
     mapsLink: '',
     maxAttendees: '',
-    waitlistEnabled: false
+    waitlistEnabled: false,
+    ticketPrice: ''
   });
   
   const [bannerFile, setBannerFile] = useState(null);
@@ -180,7 +181,8 @@ export default function CreateEventPage() {
           address: "Vanasthalipuram, Hyderabad",
           mapsLink: "",
           maxAttendees: "60",
-          waitlistEnabled: false
+          waitlistEnabled: false,
+          ticketPrice: ''
         });
         setOriginalBannerUrl("ebc_meetup_banner.jpg");
         return;
@@ -201,7 +203,8 @@ export default function CreateEventPage() {
           address: evt.venue?.address || '',
           mapsLink: evt.venue?.mapsLink || '',
           maxAttendees: evt.capacity?.maxAttendees || '',
-          waitlistEnabled: evt.capacity?.waitlistEnabled || false
+          waitlistEnabled: evt.capacity?.waitlistEnabled || false,
+          ticketPrice: evt.ticketPrice != null ? String(evt.ticketPrice) : ''
         });
         if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
         if (evt.customRegistrationFields) {
@@ -227,7 +230,8 @@ export default function CreateEventPage() {
             address: evt.venue?.address || '',
             mapsLink: evt.venue?.mapsLink || '',
             maxAttendees: evt.capacity?.maxAttendees || '',
-            waitlistEnabled: evt.capacity?.waitlistEnabled || false
+            waitlistEnabled: evt.capacity?.waitlistEnabled || false,
+            ticketPrice: evt.ticketPrice != null ? String(evt.ticketPrice) : ''
           });
           if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
           if (evt.customRegistrationFields) {
@@ -341,6 +345,7 @@ export default function CreateEventPage() {
           maxAttendees: parseInt(formData.maxAttendees, 10) || 0,
           waitlistEnabled: formData.waitlistEnabled || false
         },
+        ticketPrice: formData.ticketPrice !== '' ? parseFloat(formData.ticketPrice) : null,
         customRegistrationFields: customRegistrationFields,
         createdBy: session?.email || 'admin@perenti.com',
         status: 'active'
@@ -519,20 +524,37 @@ export default function CreateEventPage() {
           <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              Capacity
+              Capacity &amp; Pricing
             </h2>
             <div className="responsive-grid-2-col">
               <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
                 <label htmlFor="evt-capacity" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Maximum Attendees <span style={{color: '#ef4444'}}>*</span></label>
                 <input type="number" id="evt-capacity" name="maxAttendees" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} required min="1" placeholder="e.g. 100" value={formData.maxAttendees} onChange={handleChange} />
               </div>
-              <div className="form-group toggle-group" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', marginTop: '1.5rem', marginBottom: '1.25rem'}}>
-                <label htmlFor="evt-waitlist" className="form-label" style={{marginBottom: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Enable Waitlist?</label>
-                <label className="toggle-switch">
-                  <input type="checkbox" id="evt-waitlist" name="waitlistEnabled" checked={formData.waitlistEnabled} onChange={handleChange} />
-                  <span className="toggle-slider"></span>
+              <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
+                <label htmlFor="evt-ticket-price" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>
+                  Ticket Price (₹) <span style={{fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-secondary)'}}>— leave blank for free</span>
                 </label>
+                <input
+                  type="number"
+                  id="evt-ticket-price"
+                  name="ticketPrice"
+                  className="form-control"
+                  style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}}
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 460"
+                  value={formData.ticketPrice}
+                  onChange={handleChange}
+                />
               </div>
+            </div>
+            <div className="form-group toggle-group" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', marginBottom: '1.25rem'}}>
+              <label htmlFor="evt-waitlist" className="form-label" style={{marginBottom: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Enable Waitlist?</label>
+              <label className="toggle-switch">
+                <input type="checkbox" id="evt-waitlist" name="waitlistEnabled" checked={formData.waitlistEnabled} onChange={handleChange} />
+                <span className="toggle-slider"></span>
+              </label>
             </div>
           </div>
 

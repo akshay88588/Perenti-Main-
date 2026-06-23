@@ -336,6 +336,20 @@ export default function HomePage() {
                       <span className="info-card-value">{capacity} attendees</span>
                     </div>
                   </div>
+
+                  <div className="info-card">
+                    <div className="info-card-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    </div>
+                    <div className="info-card-text">
+                      <span className="info-card-label">Ticket Price</span>
+                      <span className="info-card-value">
+                        {evt.ticketPrice != null && evt.ticketPrice > 0
+                          ? `₹${Number(evt.ticketPrice).toLocaleString('en-IN')}`
+                          : 'Free'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -398,7 +412,7 @@ export default function HomePage() {
         <AuthChoiceModal show={showAuthChoice} onClose={() => setShowAuthChoice(false)} qty={qty} eventId={eventId} eventName={selectedEvent?.name} />
         <CheckoutLoginModal show={showCheckoutLogin} onClose={() => setShowCheckoutLogin(false)} qty={qty} onLoginSuccess={() => { setShowCheckoutLogin(false); setShowQuestions(true); }} />
         <RegistrationQuestionsModal show={showQuestions} onClose={() => setShowQuestions(false)} onSubmit={handleQuestionsSubmit} eventDetails={selectedEvent} />
-        <RegistrationSummaryModal show={showSummary} onClose={() => setShowSummary(false)} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} />
+        <RegistrationSummaryModal show={showSummary} onClose={() => setShowSummary(false)} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} eventTicketPrice={selectedEvent?.ticketPrice ?? null} />
         <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/my-tickets'); }} ticketIds={generatedTicketIds} email={session?.email} eventName={selectedEvent?.name} paymentMethod={lastPaymentMethod} />
         <AttendeeProfileModal show={selectedAttendee !== null} onClose={() => setSelectedAttendee(null)} attendee={selectedAttendee} />
         <Toast message={toastMessage} onClose={() => setToastMessage('')} />
@@ -491,6 +505,12 @@ export default function HomePage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         Capacity: {capacity}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        {evt.ticketPrice != null && evt.ticketPrice > 0
+                          ? `₹${Number(evt.ticketPrice).toLocaleString('en-IN')} / ticket`
+                          : 'Free Entry'}
                       </div>
                     </div>
                     <div style={{ marginTop: 'auto', paddingTop: '0.75rem' }}>

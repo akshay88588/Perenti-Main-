@@ -2,13 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useRazorpay } from '../../hooks/useRazorpay';
 
 export default function RegistrationSummaryModal({
-  show, onClose, qty, setQty, ticketsRemaining, onCheckout
+  show, onClose, qty, setQty, ticketsRemaining, onCheckout, eventTicketPrice
 }) {
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoMessage, setPromoMessage] = useState('');
 
-  const TICKET_PRICE = 399;
+  const TICKET_PRICE = (eventTicketPrice != null && eventTicketPrice >= 0) ? eventTicketPrice : 399;
   const PLATFORM_FEE = 9.98;
   const GATEWAY_FEE = 12.13;
   const GST_RATE = 0.18;
