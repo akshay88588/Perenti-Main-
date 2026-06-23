@@ -53,8 +53,13 @@ const formatCheckInTime = (timestamp) => {
 
 // Admin dashboard component
 export default function AdminDashboard() {
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const [announcement, setAnnouncement] = useState('');
   const [events, setEvents] = useState([]);
@@ -539,6 +544,30 @@ export default function AdminDashboard() {
   return (
     <div className="dashboard-page-wrapper">
       <main className="admin-main-content">
+        <div className="admin-top-nav-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--divider)', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <Link to="/" className="brand-link" style={{ textDecoration: 'none' }}>
+              <span className="brand-name">perenti</span>
+              <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
+            </Link>
+            <nav className="header-nav" aria-label="Main navigation">
+              <Link to="/" className="btn btn-secondary btn-sm" id="nav-link-upcoming" style={{ textDecoration: 'none' }}>Upcoming</Link>
+            </nav>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            {session && (
+              <span className="session-email-text" id="session-email-display" style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                {session.displayName || session.email}
+              </span>
+            )}
+            <Link to="/admin-dashboard" className="btn btn-secondary btn-sm" id="btn-header-admin-panel" style={{ textDecoration: 'none' }}>Admin Panel</Link>
+            <button type="button" className="btn btn-outline btn-sm" id="btn-header-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        </div>
+
         <div className="admin-header-row">
           <div className="admin-title-section">
             <h1>Admin Check-in Dashboard</h1>

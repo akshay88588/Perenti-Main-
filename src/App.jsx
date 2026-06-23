@@ -14,7 +14,8 @@ import { isConfigured } from './config/firebase';
 import './App.css';
 
 // Routes that render their own custom header — suppress the global one there
-const ROUTES_WITH_OWN_HEADER = ['/create-event'];
+const ROUTES_WITH_OWN_HEADER = ['/create-event', '/admin-dashboard'];
+
 
 function AppContent() {
   const location = useLocation();

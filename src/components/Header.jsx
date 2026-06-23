@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const { session, isAdmin, isUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -19,9 +20,11 @@ export default function Header() {
           <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
         </Link>
 
-        <nav className="header-nav" aria-label="Main navigation">
-          <Link to="/" className="header-nav-link" id="nav-link-upcoming">Upcoming</Link>
-        </nav>
+        {location.pathname !== '/' && (
+          <nav className="header-nav" aria-label="Main navigation">
+            <Link to="/" className="header-nav-link" id="nav-link-upcoming">Upcoming</Link>
+          </nav>
+        )}
 
         <div className="header-actions" id="header-session-actions">
           {!session && (
