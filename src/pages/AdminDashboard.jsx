@@ -59,6 +59,7 @@ export default function AdminDashboard() {
   const [announcement, setAnnouncement] = useState('');
   const [events, setEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [usersMap, setUsersMap] = useState({});
   const [loading, setLoading] = useState(true);
   
   const [searchFilter, setSearchFilter] = useState('');
@@ -158,6 +159,18 @@ export default function AdminDashboard() {
             });
           } catch (e) {
             console.warn("Failed to fetch tickets from Firestore:", e);
+          }
+
+          try {
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const uMap = {};
+            usersSnapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              uMap[data.email] = data;
+            });
+            setUsersMap(uMap);
+          } catch (e) {
+            console.warn("Failed to fetch users from Firestore:", e);
           }
         } else {
           eventsList = JSON.parse(localStorage.getItem('events')) || [];
@@ -910,7 +923,8 @@ export default function AdminDashboard() {
               <table className="attendees-table">
                 <thead>
                   <tr>
-                    <th style={{padding: '0.75rem 1rem'}}>Email</th>
+                    <th style={{padding: '0.75rem 1rem'}}>Name</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Email</th>
                     <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Ticket ID</th>
                     <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Status</th>
                     <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Approval</th>
@@ -931,7 +945,18 @@ export default function AdminDashboard() {
 
                       return (
                         <tr key={t.id}>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><button onClick={() => setSelectedTicket(t)} style={{background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, borderBottom: '1px dashed var(--brand-primary)', cursor: 'pointer'}}>{t.email}</button></td>
+                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}>
+                            {(() => {
+                              const user = usersMap[t.email];
+                              const name = user ? [user.firstName, user.lastName].filter(Boolean).join(' ') : '';
+                              return (
+                                <button onClick={() => setSelectedTicket(t)} style={{background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, borderBottom: '1px dashed var(--brand-primary)', cursor: 'pointer'}}>
+                                  {name || t.email}
+                                </button>
+                              );
+                            })()}
+                          </td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap', fontSize: '0.82rem', color: 'var(--text-secondary)'}}>{t.email}</td>
                           <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="monospaced-code" style={{fontSize: '0.75rem'}}>{t.id}</span></td>
                           <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className={`badge-status ${isChecked ? 'checked-in' : 'unused'}`}>{isChecked ? 'Checked In' : 'Unused'}</span></td>
                           <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="badge-status" style={approvalStyle}>{approval.toUpperCase()}</span></td>

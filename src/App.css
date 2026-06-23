@@ -86,6 +86,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: nowrap;
 }
 
 .brand-link {
@@ -94,6 +95,7 @@ h1, h2, h3, h4, h5, h6 {
   gap: 0.5rem;
   text-decoration: none;
   color: var(--text-main);
+  flex-shrink: 0;
 }
 
 .brand-logo {
@@ -110,6 +112,7 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  white-space: nowrap;
 }
 
 .brand-tagline {
@@ -119,6 +122,7 @@ h1, h2, h3, h4, h5, h6 {
   padding-left: 0.75rem;
   border-left: 1px solid var(--divider);
   margin-top: 0.15rem;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -127,11 +131,43 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+@media (max-width: 480px) {
+  .header-nav-link {
+    display: none;
+  }
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.header-nav-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.375rem;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-nav-link:hover {
+  color: var(--text-main);
+  background-color: var(--bg-info-card);
+}
+
 .header-actions {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .icon-btn {
@@ -4009,6 +4045,61 @@ body {
   .rsvp-action-btn {
     flex: 1;
     width: 100%;
+  }
+}
+
+/* ==========================================================================
+   RSVP Table Responsive & Desktop-Only Columns
+   ========================================================================== */
+.attendees-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.attendees-table th,
+.attendees-table td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.checked-in-list-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .checked-in-list-container {
+    overflow-x: hidden;
+  }
+
+  .desktop-only-col {
+    display: none !important;
+  }
+
+  .attendees-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .attendees-table th:first-child,
+  .attendees-table td:first-child {
+    width: 60%;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .attendees-table th:last-child,
+  .attendees-table td:last-child {
+    width: 40%;
+    text-align: center;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-only-col {
+    display: table-cell;
   }
 }
 
