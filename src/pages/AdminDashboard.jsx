@@ -989,7 +989,6 @@ export default function AdminDashboard() {
                                 <span className="btn-action-checkin" style={{backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.2)', cursor: 'default', pointerEvents: 'none'}}>
                                   Checked-in {formatCheckInTime(t.timestamp)}
                                 </span>
-                                <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
                               </div>
                             )}
                             {approval === 'rejected' && (
