@@ -818,35 +818,36 @@ export default function AdminDashboard() {
                   <div 
                     key={q.id} 
                     draggable
+                    className="custom-reg-card"
                     onDragStart={(e) => { dragItem.current = idx; e.currentTarget.style.opacity = '0.5'; }}
                     onDragEnter={(e) => { dragOverItem.current = idx; e.preventDefault(); }}
                     onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; handleSort(); }}
                     onDragOver={(e) => e.preventDefault()}
                     style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', cursor: 'grab'}}
                   >
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
+                    <div className="custom-reg-info" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
                       {/* Drag icon placeholder */}
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
+                      <svg className="custom-reg-drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
 
-                      <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
-                          <strong style={{color: 'var(--text-main)'}}>
+                      <div className="custom-reg-text-container" style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
+                        <div className="custom-reg-label-group" style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
+                          <strong className="custom-reg-label" style={{color: 'var(--text-main)'}}>
                             {q.label.replace(/\s*\([Oo]ptional\)/gi, '')}
                             {(q.required === true || q.required === 'true') && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
                           </strong>
-                          <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
+                          <span className="custom-reg-badge" style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         </div>
                         {q.options && (
-                          <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                          <div className="custom-reg-options" style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                             Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0}}>
+                    <div className="custom-reg-controls" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0}}>
                       {/* Mobile friendly Move Up/Down Controls */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                      <div className="custom-reg-move-controls" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
                         <button type="button" onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === 0 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                         </button>
@@ -856,7 +857,7 @@ export default function AdminDashboard() {
                       </div>
 
                       {/* Required Toggle Switch */}
-                      <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                      <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
                         <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}} className="required-text-mobile">
                           {q.required ? 'Req' : 'Opt'}
                         </span>

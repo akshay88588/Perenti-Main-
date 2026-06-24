@@ -569,30 +569,33 @@ export default function CreateEventPage() {
 
             <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem'}}>
               {customRegistrationFields.map((q, idx) => (
-                <div key={q.id || idx} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
-                    <div style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                      <div style={{display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap'}}>
-                        <strong style={{color: 'var(--text-main)'}}>{q.label.replace(/\s*\([Oo]ptional\)/g, '')}</strong>
-                        <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
+                <div key={q.id || idx} className="custom-reg-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)'}}>
+                  <div className="custom-reg-info" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
+                    <div className="custom-reg-text-container" style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                      <div className="custom-reg-label-group" style={{display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap'}}>
+                        <strong className="custom-reg-label" style={{color: 'var(--text-main)'}}>{q.label.replace(/\s*\([Oo]ptional\)/g, '')}</strong>
+                        <span className="custom-reg-badge" style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         {(q.required === true || q.required === 'true') ? (
-                          <span style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>
+                          <span className="custom-reg-indicator" style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>
                         ) : (
-                          <span style={{color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Optional</span>
+                          <span className="custom-reg-indicator" style={{color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Optional</span>
                         )}
                       </div>
                       {q.options && (
-                        <div style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                        <div className="custom-reg-options" style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                           Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0}}>
+                  <div className="custom-reg-controls" style={{display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0}}>
                     {/* Required Toggle */}
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
-                      <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.required === true || q.required === 'true') ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                    <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                      <span className="required-text-mobile" style={{fontSize: '0.75rem', fontWeight: 600, color: (q.required === true || q.required === 'true') ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}}>
+                        {(q.required === true || q.required === 'true') ? 'Req' : 'Opt'}
+                      </span>
+                      <span className="required-text-desktop" style={{fontSize: '0.75rem', fontWeight: 600, color: (q.required === true || q.required === 'true') ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
                         {(q.required === true || q.required === 'true') ? 'Required' : 'Optional'}
                       </span>
                       <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">

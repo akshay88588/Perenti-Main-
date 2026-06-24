@@ -4341,4 +4341,117 @@ body {
   gap: 1rem;
 }
 
+/* ==========================================================================
+   Custom Registration Form Responsive UI Mobile Fix
+   ========================================================================== */
+@media (max-width: 768px) {
+  .custom-reg-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .custom-reg-info {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .custom-reg-drag-handle {
+    margin-top: 0.2rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .custom-reg-text-container {
+    flex: 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .custom-reg-label-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+  }
+
+  .custom-reg-label {
+    font-size: 0.9rem !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .custom-reg-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    align-self: flex-start !important;
+  }
+
+  .custom-reg-indicator {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    align-self: flex-start !important;
+  }
+
+  .custom-reg-options {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    margin-top: 0.35rem !important;
+    width: 100% !important;
+  }
+
+  .custom-reg-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+    border-top: 1px solid var(--border-card) !important;
+    padding-top: 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .custom-reg-toggle-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+
+  .required-text-mobile {
+    display: inline-block !important;
+  }
+
+  .required-text-desktop {
+    display: none !important;
+  }
+
+  .custom-reg-move-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+  }
+}
+
+
 
