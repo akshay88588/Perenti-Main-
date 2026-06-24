@@ -159,22 +159,34 @@ export default function RegistrationSummaryModal({
             </div>
           )}
 
-          <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
+          <div style={{display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '0.5rem'}}>
             <button 
               type="button" 
-              className="btn btn-primary btn-block btn-lg" 
+              className="btn btn-primary btn-block" 
               onClick={handleOnlinePayment}
               disabled={paymentStatus === 'processing'}
-              style={{position: 'relative'}}
+              style={{
+                position: 'relative', 
+                padding: '0.85rem', 
+                fontSize: '1rem', 
+                fontWeight: 700, 
+                borderRadius: '0.5rem'
+              }}
             >
               {paymentStatus === 'processing' ? 'Processing...' : `Pay ₹${calculations.total.toFixed(2)} Securely`}
             </button>
             <button 
               type="button" 
-              className="btn btn-outline btn-block btn-lg" 
+              className="btn btn-outline btn-block" 
               onClick={() => onCheckout(qty, calculations.total, 'offline', null)}
               disabled={paymentStatus === 'processing'}
-              style={{ fontWeight: 700 }}
+              style={{ 
+                padding: '0.85rem', 
+                fontSize: '1rem', 
+                fontWeight: 700, 
+                borderRadius: '0.5rem',
+                borderWidth: '1.5px'
+              }}
             >
               Skip and Pay at Venue
             </button>
