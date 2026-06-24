@@ -837,11 +837,6 @@ export default function AdminDashboard() {
                           </strong>
                           <span className="custom-reg-badge" style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
                         </div>
-                        {q.options && (
-                          <div className="custom-reg-options" style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                            Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
 

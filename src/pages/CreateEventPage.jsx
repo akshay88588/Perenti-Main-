@@ -581,11 +581,6 @@ export default function CreateEventPage() {
                           <span className="custom-reg-indicator" style={{color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Optional</span>
                         )}
                       </div>
-                      {q.options && (
-                        <div className="custom-reg-options" style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                          Options: <span style={{fontStyle: 'italic'}}>{q.options}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                   
