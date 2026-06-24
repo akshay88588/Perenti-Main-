@@ -9,8 +9,11 @@ export function useRazorpay() {
     setError(null);
 
     try {
+      // Use VITE_API_URL if defined (useful if frontend and backend are deployed separately on Render)
+      const baseUrl = import.meta.env.VITE_API_URL || '';
+      
       // 1. Call backend to create order
-      const orderResponse = await fetch('/api/create-order', {
+      const orderResponse = await fetch(`${baseUrl}/api/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -43,7 +46,7 @@ export function useRazorpay() {
         handler: async function (response) {
           try {
             // 3. On success, verify signature on backend
-            const verifyResponse = await fetch('/api/verify-payment', {
+            const verifyResponse = await fetch(`${baseUrl}/api/verify-payment`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
