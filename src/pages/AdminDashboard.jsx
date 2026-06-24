@@ -132,6 +132,15 @@ export default function AdminDashboard() {
     dragOverItem.current = null;
   };
 
+  const handleMove = (index, direction) => {
+    const newConfig = [...formConfig];
+    if (index + direction >= 0 && index + direction < newConfig.length) {
+      const item = newConfig.splice(index, 1)[0];
+      newConfig.splice(index + direction, 0, item);
+      setFormConfig(newConfig);
+    }
+  };
+
   useEffect(() => {
     if (!session || session.role !== 'admin') {
       navigate('/login');
@@ -835,10 +844,23 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0}}>
+                      {/* Mobile friendly Move Up/Down Controls */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                        <button type="button" onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === 0 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <button type="button" onClick={() => handleMove(idx, 1)} disabled={idx === formConfig.length - 1} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === formConfig.length - 1 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === formConfig.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                      </div>
+
                       {/* Required Toggle Switch */}
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
-                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}} className="required-text-mobile">
+                          {q.required ? 'Req' : 'Opt'}
+                        </span>
+                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)'}} className="required-text-desktop">
                           {q.required ? 'Required' : 'Optional'}
                         </span>
                         <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
