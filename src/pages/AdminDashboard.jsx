@@ -118,6 +118,20 @@ export default function AdminDashboard() {
   const [formConfig, setFormConfig] = useState([]);
   const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
 
+  const dragItem = useRef(null);
+  const dragOverItem = useRef(null);
+
+  const handleSort = () => {
+    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
+      const _formConfig = [...formConfig];
+      const draggedItemContent = _formConfig.splice(dragItem.current, 1)[0];
+      _formConfig.splice(dragOverItem.current, 0, draggedItemContent);
+      setFormConfig(_formConfig);
+    }
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
   useEffect(() => {
     if (!session || session.role !== 'admin') {
       navigate('/login');
@@ -792,7 +806,15 @@ export default function AdminDashboard() {
               <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
                 {formConfig.map((q, idx) => (
-                  <div key={q.id} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s'}}>
+                  <div 
+                    key={q.id} 
+                    draggable
+                    onDragStart={(e) => { dragItem.current = idx; e.currentTarget.style.opacity = '0.5'; }}
+                    onDragEnter={(e) => { dragOverItem.current = idx; e.preventDefault(); }}
+                    onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; handleSort(); }}
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', cursor: 'grab'}}
+                  >
                     <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
                       {/* Drag icon placeholder */}
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
