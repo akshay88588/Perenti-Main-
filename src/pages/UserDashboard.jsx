@@ -131,8 +131,27 @@ export default function UserDashboard() {
             <p>Review your registration passes. Present the QR codes at the venue entrance.</p>
           </div>
           {tickets.length > 0 && (
-            <button type="button" className="btn btn-primary" onClick={handlePrint} style={{ padding: '0.85rem 1.5rem', minHeight: '3rem', fontSize: '1rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '0.5rem', boxShadow: 'var(--shadow-sm)' }}>
-              🖨️ Print All Tickets
+            <button type="button" className="btn btn-primary" onClick={handlePrint} style={{ 
+              padding: '0.75rem 1.5rem', 
+              fontSize: '1rem', 
+              fontWeight: 600, 
+              whiteSpace: 'nowrap', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: '0.6rem', 
+              borderRadius: '0.5rem', 
+              boxShadow: '0 4px 6px rgba(90, 154, 142, 0.2)',
+              border: 'none',
+              cursor: 'pointer',
+              height: 'fit-content'
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              Print All Tickets
             </button>
           )}
         </div>
