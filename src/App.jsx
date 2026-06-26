@@ -1,7 +1,6 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
-import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import HomePage from './pages/HomePage';
@@ -10,9 +9,61 @@ import SignupPage from './pages/SignupPage';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateEventPage from './pages/CreateEventPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { isConfigured } from './config/firebase';
 
 import './App.css';
+
+// Routes that render their own custom header — suppress the global one there
+const ROUTES_WITH_OWN_HEADER = ['/create-event', '/admin-dashboard'];
+
+
+function AppContent() {
+  const location = useLocation();
+  const hideGlobalHeader = ROUTES_WITH_OWN_HEADER.includes(location.pathname);
+
+  return (
+    <>
+      {!hideGlobalHeader && <Header />}
+      <Routes>
+        {/* Homepage: events list OR event detail (via ?eventId=) */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+
+        {/* My Tickets — only shows user's booked tickets */}
+        <Route path="/my-tickets" element={
+          <ProtectedRoute requiredRole="user">
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
+        {/* Legacy alias */}
+        <Route path="/user-dashboard" element={
+          <ProtectedRoute requiredRole="user">
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin-dashboard" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/create-event" element={
+          <ProtectedRoute requiredRole="admin">
+            <CreateEventPage />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   if (!isConfigured) {
@@ -27,36 +78,7 @@ function App() {
     );
   }
 
-  return (
-    <>
-      {/* We only show the header inside the App layout, but we need to conditionally
-          hide it on some pages if needed. Currently, all pages have the header. */}
-      <Header />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        
-        <Route path="/user-dashboard" element={
-          <ProtectedRoute requiredRole="user">
-            <UserDashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin-dashboard" element={
-          <ProtectedRoute requiredRole="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/create-event" element={
-          <ProtectedRoute requiredRole="admin">
-            <CreateEventPage />
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </>
-  );
+  return <AppContent />;
 }
 
 export default App;

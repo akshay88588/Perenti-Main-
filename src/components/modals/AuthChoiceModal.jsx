@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function AuthChoiceModal({ show, onClose, qty }) {
+export default function AuthChoiceModal({ show, onClose, qty, eventId, eventName }) {
   const navigate = useNavigate();
 
   if (!show) return null;
@@ -20,11 +20,11 @@ export default function AuthChoiceModal({ show, onClose, qty }) {
 
           <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
             <button type="button" className="btn btn-primary btn-block btn-lg"
-              onClick={() => { onClose(); navigate(`/signup?qty=${qty}`); }}>
+              onClick={() => { onClose(); navigate(`/signup?qty=${qty}${eventId ? `&eventId=${eventId}` : ''}${eventName ? `&eventName=${encodeURIComponent(eventName)}` : ''}`); }}>
               Sign Up with Email
             </button>
             <button type="button" className="btn btn-outline btn-block btn-lg"
-              onClick={() => { onClose(); navigate(`/login?qty=${qty}`); }}>
+              onClick={() => { onClose(); navigate(`/login?qty=${qty}${eventId ? `&eventId=${eventId}` : ''}${eventName ? `&eventName=${encodeURIComponent(eventName)}` : ''}`); }}>
               I Already Have an Account
             </button>
           </div>

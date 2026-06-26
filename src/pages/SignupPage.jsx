@@ -8,6 +8,8 @@ import { useBookTickets } from '../hooks/useBookTickets';
 import { useEventSettings } from '../hooks/useEventSettings';
 
 export default function SignupPage() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,10 +26,22 @@ export default function SignupPage() {
   const urlParams = new URLSearchParams(location.search);
   const redirectQty = urlParams.get('qty');
   const redirectUrl = urlParams.get('redirect');
+  const eventId = urlParams.get('eventId');
+  const eventName = urlParams.get('eventName');
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!firstName.trim()) {
+      setError('First name is required.');
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setError('Last name is required.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -44,21 +58,26 @@ export default function SignupPage() {
         await setDoc(doc(db, 'users', user.email), {
           email: user.email,
           role: role,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          displayName: `${firstName.trim()} ${lastName.trim()}`,
           createdAt: new Date().toISOString()
         });
       } catch(e) {
         console.error("Error saving user role", e);
       }
 
-      login(user.email, role);
+      login(user.email, role, firstName.trim(), lastName.trim());
 
       if (redirectQty && parseInt(redirectQty) > 0) {
-        await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining);
-        navigate('/user-dashboard');
+        const savedAnswers = JSON.parse(sessionStorage.getItem('currentBookingAnswers') || '{}');
+        await bookTicketsForUser(user.email, parseInt(redirectQty), ticketsRemaining, updateTicketsRemaining, savedAnswers, eventId, eventName);
+        sessionStorage.removeItem('currentBookingAnswers');
+        navigate('/');
       } else if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        navigate(role === 'admin' ? '/admin-dashboard' : '/user-dashboard');
+        navigate(role === 'admin' ? '/admin-dashboard' : '/');
       }
     } catch (err) {
       console.error("Error signing up:", err);
@@ -87,6 +106,19 @@ export default function SignupPage() {
           )}
 
           <form className="modal-form" id="signup-form" onSubmit={handleSignup}>
+            <div className="signup-name-row">
+              <div className="form-group" style={{flex: 1}}>
+                <label htmlFor="signup-first-name" className="form-label">First Name</label>
+                <input type="text" id="signup-first-name" className="form-control" required placeholder="John"
+                  value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              </div>
+              <div className="form-group" style={{flex: 1}}>
+                <label htmlFor="signup-last-name" className="form-label">Last Name</label>
+                <input type="text" id="signup-last-name" className="form-control" required placeholder="Smith"
+                  value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+            </div>
+
             <div className="form-group">
               <label htmlFor="signup-email" className="form-label">Email Address</label>
               <input type="email" id="signup-email" className="form-control" required placeholder="name@domain.com"

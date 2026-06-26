@@ -14,8 +14,9 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const login = useCallback((email, role) => {
-    const user = { email, role };
+  const login = useCallback((email, role, firstName = '', lastName = '') => {
+    const displayName = [firstName, lastName].filter(Boolean).join(' ') || email;
+    const user = { email, role, firstName, lastName, displayName };
     localStorage.setItem('currentUser', JSON.stringify(user));
     setSession(user);
   }, []);

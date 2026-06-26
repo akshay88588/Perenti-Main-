@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const { session, isAdmin, isUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -19,6 +20,12 @@ export default function Header() {
           <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
         </Link>
 
+        {location.pathname !== '/' && (
+          <nav className="header-nav" aria-label="Main navigation">
+            <Link to="/" className="header-nav-link" id="nav-link-upcoming">Upcoming</Link>
+          </nav>
+        )}
+
         <div className="header-actions" id="header-session-actions">
           {!session && (
             <>
@@ -29,15 +36,15 @@ export default function Header() {
 
           {session && isUser && (
             <>
-              <span className="session-email-text" id="session-email-display" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session.email}</span>
-              <Link to="/user-dashboard" className="btn btn-secondary btn-sm" id="btn-header-my-tickets">My Tickets</Link>
+              <span className="session-email-text" id="session-email-display" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session.displayName || session.email}</span>
+              <Link to="/my-tickets" className="btn btn-secondary btn-sm" id="btn-header-my-tickets">My Tickets</Link>
               <button type="button" className="btn btn-outline btn-sm" id="btn-header-logout" onClick={handleLogout}>Logout</button>
             </>
           )}
 
           {session && isAdmin && (
             <>
-              <span className="session-email-text" id="session-email-display" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session.email}</span>
+              <span className="session-email-text" id="session-email-display" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session.displayName || session.email}</span>
               <Link to="/admin-dashboard" className="btn btn-secondary btn-sm" id="btn-header-admin-panel">Admin Panel</Link>
               <button type="button" className="btn btn-outline btn-sm" id="btn-header-logout" onClick={handleLogout}>Logout</button>
             </>

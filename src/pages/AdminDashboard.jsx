@@ -4,21 +4,95 @@ import { useAuth } from '../context/AuthContext';
 import { collection, doc, getDocs, getDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { db } from '../config/firebase';
 import jsQR from 'jsqr';
+import EventImage from '../components/EventImage';
+
+// Helper function to format check-in timestamps to uniform hh:mm:ss am/pm
+const formatCheckInTime = (timestamp) => {
+  if (!timestamp) return '';
+  try {
+    let timeStr = '';
+    if (timestamp.includes(',')) {
+      timeStr = timestamp.split(',')[1].trim();
+    } else {
+      timeStr = timestamp.trim();
+    }
+    
+    // Match hh:mm:ss and optional am/pm
+    const timeParts = timeStr.match(/(\d+):(\d+):(\d+)(?:\s*(am|pm))?/i);
+    if (timeParts) {
+      let hours = parseInt(timeParts[1], 10);
+      const minutes = timeParts[2].padStart(2, '0');
+      const seconds = timeParts[3].padStart(2, '0');
+      const ampm = timeParts[4] ? timeParts[4].toLowerCase() : '';
+      
+      const hoursStr = String(hours).padStart(2, '0');
+      if (ampm) {
+        return `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+      } else {
+        return `${hoursStr}:${minutes}:${seconds}`;
+      }
+    }
+
+    // Date object fallback
+    const date = new Date(timestamp);
+    if (!isNaN(date.getTime())) {
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = String(hours).padStart(2, '0');
+      return `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+    }
+  } catch (e) {
+    console.error("Error formatting time:", e);
+  }
+  return timestamp;
+};
 
 // Admin dashboard component
 export default function AdminDashboard() {
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   const [announcement, setAnnouncement] = useState('');
+  const [broadcastedAnnouncement, setBroadcastedAnnouncement] = useState('');
   const [events, setEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [usersMap, setUsersMap] = useState({});
   const [loading, setLoading] = useState(true);
   
   const [searchFilter, setSearchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'checked-in'
+  const [selectedEventId, setSelectedEventId] = useState('all');
+
+  const allEvents = [
+    {
+      id: 'main',
+      name: "Ebc 28th Meetup (Default)",
+      description: "Join us at the Ebc 28th meetup, where aspiring founders, business owners, professionals, and students can share their stories.",
+      bannerUrl: "ebc_meetup_banner.jpg",
+      category: "Networking",
+      startDate: "2026-06-14T09:00",
+      endDate: "2026-06-14T11:00",
+      venue: {
+        name: "Birch Cafe",
+        address: "Vanasthalipuram, Hyderabad"
+      },
+      capacity: {
+        maxAttendees: 60
+      }
+    },
+    ...events
+  ];
 
   const [manualTicketId, setManualTicketId] = useState('');
 
@@ -43,7 +117,30 @@ export default function AdminDashboard() {
 
   // Form Builder state
   const [formConfig, setFormConfig] = useState([]);
-  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: false });
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
+
+  const dragItem = useRef(null);
+  const dragOverItem = useRef(null);
+
+  const handleSort = () => {
+    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
+      const _formConfig = [...formConfig];
+      const draggedItemContent = _formConfig.splice(dragItem.current, 1)[0];
+      _formConfig.splice(dragOverItem.current, 0, draggedItemContent);
+      setFormConfig(_formConfig);
+    }
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
+  const handleMove = (index, direction) => {
+    const newConfig = [...formConfig];
+    if (index + direction >= 0 && index + direction < newConfig.length) {
+      const item = newConfig.splice(index, 1)[0];
+      newConfig.splice(index + direction, 0, item);
+      setFormConfig(newConfig);
+    }
+  };
 
   useEffect(() => {
     if (!session || session.role !== 'admin') {
@@ -61,30 +158,71 @@ export default function AdminDashboard() {
         { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
         { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
         { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
-        { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL (Optional)', required: false },
-        { id: 'q-instagram', type: 'text', label: 'Instagram URL (Optional)', required: false },
-        { id: 'q-website', type: 'text', label: 'Personal Website (Optional)', required: false },
+        { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
+        { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
+        { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
         { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
       ]);
     }
 
     const loadData = async () => {
       try {
-        const eventsSnapshot = await getDocs(collection(db, 'events'));
-        const eventsList = [];
-        eventsSnapshot.forEach((docSnap) => {
-          eventsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        setEvents(eventsList);
+        let eventsList = [];
+        let ticketsList = [];
 
-        const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
-        const ticketsList = [];
-        ticketsSnapshot.forEach((docSnap) => {
-          ticketsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        if (db) {
+          try {
+            const eventsSnapshot = await getDocs(collection(db, 'events'));
+            eventsSnapshot.forEach((docSnap) => {
+              eventsList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch events from Firestore, using localStorage fallback:", e);
+            eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          }
+
+          try {
+            const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
+            ticketsSnapshot.forEach((docSnap) => {
+              ticketsList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn("Failed to fetch tickets from Firestore:", e);
+          }
+
+          try {
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const uMap = {};
+            usersSnapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              uMap[data.email] = data;
+            });
+            setUsersMap(uMap);
+          } catch (e) {
+            console.warn("Failed to fetch users from Firestore:", e);
+          }
+
+          try {
+            const annDoc = await getDoc(doc(db, 'settings', 'announcement'));
+            if (annDoc.exists()) {
+              setAnnouncement(annDoc.data().text);
+              setBroadcastedAnnouncement(annDoc.data().text);
+            }
+          } catch (e) {
+            console.warn("Failed to fetch announcement from Firestore:", e);
+          }
+        } else {
+          eventsList = JSON.parse(localStorage.getItem('events')) || [];
+        }
+
+        setEvents(eventsList);
         setTickets(ticketsList);
       } catch (error) {
         console.error("Error loading admin data:", error);
+        try {
+          const eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          setEvents(eventsList);
+        } catch (_) {}
       } finally {
         setLoading(false);
       }
@@ -108,14 +246,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const broadcastAnnouncement = () => {
+  const broadcastAnnouncement = async () => {
     if (!announcement.trim()) {
       alert("Error: Announcement text cannot be empty!");
       return;
     }
-    localStorage.setItem('latestAnnouncement', announcement.trim());
-    setAnnouncement('');
-    alert("Announcement broadcasted successfully to all attendees!");
+    const cleanAnn = announcement.trim();
+    try {
+      await setDoc(doc(db, 'settings', 'announcement'), { text: cleanAnn, timestamp: Date.now() });
+      setBroadcastedAnnouncement(cleanAnn);
+      alert("Announcement broadcasted successfully to all attendees!");
+    } catch (e) {
+      console.error("Failed to broadcast announcement:", e);
+      alert("Failed to broadcast announcement.");
+    }
+  };
+
+  const deleteAnnouncement = async () => {
+    if (!window.confirm("Are you sure you want to delete the current announcement?")) return;
+    try {
+      await deleteDoc(doc(db, 'settings', 'announcement'));
+      setAnnouncement('');
+      setBroadcastedAnnouncement('');
+    } catch (e) {
+      console.error("Failed to delete announcement:", e);
+      alert("Failed to delete announcement.");
+    }
   };
 
   const updateAttendeeApproval = async (tId, newStatus) => {
@@ -182,6 +338,20 @@ export default function AdminDashboard() {
         }
       } else {
         alert(`Error: Invalid Ticket ID "${cleanId}"!`);
+        return;
+      }
+    }
+
+    // Verify if ticket belongs to the selected event
+    const ticketEventId = ticket.eventId || 'main';
+    if (selectedEventId !== 'all' && ticketEventId !== selectedEventId) {
+      const activeEvent = allEvents.find(e => e.id === selectedEventId);
+      const ticketEvent = allEvents.find(e => e.id === ticketEventId);
+      const activeEventName = activeEvent ? activeEvent.name : 'the selected event';
+      const ticketEventName = ticketEvent ? ticketEvent.name : 'another event';
+      
+      if (!window.confirm(`Warning: This ticket is registered for "${ticketEventName}", but you are checking in for "${activeEventName}". Do you want to proceed with check-in?`)) {
+        stopCameraScan();
         return;
       }
     }
@@ -311,12 +481,18 @@ export default function AdminDashboard() {
 
     const id = 'q-custom-' + Date.now();
     setFormConfig([...formConfig, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
-    setNewQuestion({ label: '', type: 'text', options: '', required: false });
+    setNewQuestion({ label: '', type: 'text', options: '', required: true });
   };
 
   const handleDeleteQuestion = (index) => {
     const newConfig = [...formConfig];
     newConfig.splice(index, 1);
+    setFormConfig(newConfig);
+  };
+
+  const handleToggleRequired = (index) => {
+    const newConfig = [...formConfig];
+    newConfig[index] = { ...newConfig[index], required: !newConfig[index].required };
     setFormConfig(newConfig);
   };
 
@@ -375,30 +551,86 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url);
   };
 
-  // Compute metrics
-  const total = tickets.length;
-  const checked = tickets.filter(t => t.status === 'checked-in').length;
+  // Filter tickets by active dashboard event
+  const activeEventTickets = tickets.filter(t => {
+    if (selectedEventId === 'all') return true;
+    const ticketEventId = t.eventId || 'main';
+    return ticketEventId === selectedEventId;
+  });
+
+  // Compute metrics for active dashboard
+  const total = activeEventTickets.length;
+  const checked = activeEventTickets.filter(t => t.status === 'checked-in').length;
   const pending = total - checked;
-  const revenue = total * 399;
+  const activeEvent = allEvents.find(e => e.id === selectedEventId);
+  const defaultTicketPrice = 399;
+  const eventTicketPrice = (activeEvent && activeEvent.ticketPrice != null && activeEvent.ticketPrice >= 0)
+    ? activeEvent.ticketPrice
+    : defaultTicketPrice;
+  const revenue = selectedEventId === 'all'
+    ? activeEventTickets.reduce((sum, t) => {
+        const evt = allEvents.find(e => e.id === (t.eventId || 'main'));
+        const price = (evt && evt.ticketPrice != null && evt.ticketPrice >= 0) ? evt.ticketPrice : defaultTicketPrice;
+        return sum + price;
+      }, 0)
+    : total * eventTicketPrice;
   const attendanceRate = total > 0 ? ((checked / total) * 100).toFixed(1) : '0';
 
-  // Filtered tickets
+  // Filtered tickets (Search + Filters + Event selection)
   const filteredTickets = tickets.filter(t => {
+    const ticketEventId = t.eventId || 'main';
+    const matchesEvent = selectedEventId === 'all' || ticketEventId === selectedEventId;
+    
     const query = searchFilter.toLowerCase();
     const matchesSearch = t.email.toLowerCase().includes(query) || t.id.toLowerCase().includes(query);
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     const approval = t.approval || 'approved';
     const matchesApproval = approvalFilter === 'all' || approval === approvalFilter;
-    return matchesSearch && matchesStatus && matchesApproval;
+    return matchesEvent && matchesSearch && matchesStatus && matchesApproval;
   });
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', background: 'var(--bg-main)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div className="spinner" style={{
+            width: '40px', height: '40px', border: '4px solid var(--border-card)', 
+            borderTop: '4px solid var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'
+          }}></div>
+          <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Loading admin panel...</p>
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="dashboard-page-wrapper">
       <main className="admin-main-content">
+        <div className="admin-top-nav-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--divider)', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <Link to="/" className="brand-link" style={{ textDecoration: 'none' }}>
+              <span className="brand-name">perenti</span>
+              <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
+            </Link>
+            <nav className="header-nav" aria-label="Main navigation">
+              <Link to="/" className="btn btn-secondary btn-sm" id="nav-link-upcoming" style={{ textDecoration: 'none' }}>Upcoming</Link>
+            </nav>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            {session && (
+              <span className="session-email-text" id="session-email-display" style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                {session.displayName || session.email}
+              </span>
+            )}
+            <Link to="/admin-dashboard" className="btn btn-secondary btn-sm" id="btn-header-admin-panel" style={{ textDecoration: 'none' }}>Admin Panel</Link>
+            <button type="button" className="btn btn-outline btn-sm" id="btn-header-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        </div>
+
         <div className="admin-header-row">
           <div className="admin-title-section">
             <h1>Admin Check-in Dashboard</h1>
@@ -411,8 +643,43 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
+
+        {/* Active Dashboard Selector */}
+        <div className="admin-event-filter-bar">
+          <div className="admin-event-filter-select-wrapper">
+            <span className="admin-event-filter-label">
+              Active Dashboard:
+            </span>
+            <select 
+              value={selectedEventId} 
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="form-control admin-event-filter-select"
+            >
+              <option value="all">🌐 All Events Combined</option>
+              {allEvents.map(evt => (
+                <option key={evt.id} value={evt.id}>
+                  📅 {evt.name || 'Untitled Event'}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {selectedEventId !== 'all' && (
+            <div className="admin-event-filter-clear-wrapper">
+              <span className="admin-event-filter-badge">
+                Filtering Active Dashboard
+              </span>
+              <button 
+                onClick={() => setSelectedEventId('all')} 
+                className="btn btn-secondary btn-sm admin-event-filter-clear-btn"
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
+        </div>
         
-        <div className="admin-stats-row" style={{marginBottom: '0.5rem'}}>
+        <div className="admin-stats-row" style={{marginBottom: '1.25rem'}}>
           <div className="admin-stat-box"><span className="stat-num">{total}</span><span className="stat-label">Total Registered</span></div>
           <div className="admin-stat-box"><span className="stat-num">{checked}</span><span className="stat-label">Checked In</span></div>
           <div className="admin-stat-box"><span className="stat-num">{pending}</span><span className="stat-label">Pending Check-in</span></div>
@@ -424,7 +691,12 @@ export default function AdminDashboard() {
         {showSuccessOverlay && (
           <div id="checkin-success-overlay" className="visible" style={{display: 'flex', position: 'fixed', inset: 0, zIndex: 9999, alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.72)', backdropFilter: 'blur(6px)'}}>
             <div className="checkin-success-card" style={{background: '#ffffff', borderRadius: '1.5rem', padding: '2.5rem 2rem 1.75rem', maxWidth: '380px', width: '90%', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.45)', position: 'relative', overflow: 'hidden'}}>
-              <p className="checkin-success-title" style={{fontFamily: '"Outfit", sans-serif', fontSize: '1.75rem', fontWeight: 800, color: '#065f46'}}>Check-in Successful!</p>
+              <div className="checkin-success-icon" style={{width: '96px', height: '96px', margin: '0 auto 1.25rem', background: '#ecfdf5', border: '4px solid #10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <p className="checkin-success-title" style={{fontFamily: '"Outfit", sans-serif', fontSize: '1.75rem', fontWeight: 800, color: '#065f46', margin: '0 0 0.5rem 0'}}>Check-in Successful!</p>
               <p className="checkin-success-sub" style={{fontSize: '0.85rem', color: '#6b7280'}}>Attendee verified & admitted</p>
               <div>
                 <span className="checkin-detail-chip" style={{display: 'inline-block', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '999px', padding: '0.3rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, color: '#065f46', margin: '0.2rem 0.15rem', fontFamily: 'monospace'}}>{overlayDetails.email}</span>
@@ -448,11 +720,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="admin-panel-box" style={{marginBottom: '0.5rem'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '0.5rem'}}>
+        <div className="admin-panel-box" style={{marginBottom: '1.25rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem'}}>
             <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Manage Events</h3>
           </div>
           <div className="events-grid" style={{marginTop: 0}}>
+<<<<<<< HEAD
             {events.length === 0 ? (
               <div className="event-card">
                 <div className="event-card-banner">
@@ -476,25 +749,72 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <div className="event-card-banner-placeholder">{/* ❌ removed */}</div>
+=======
+            {allEvents.map(evt => {
+              const isSelected = selectedEventId === evt.id;
+              return (
+                <div 
+                  className={`event-card ${isSelected ? 'active-event-card' : ''}`} 
+                  key={evt.id}
+                  onClick={() => setSelectedEventId(isSelected ? 'all' : evt.id)}
+                  style={{
+                    cursor: 'pointer',
+                    border: isSelected ? '2px solid var(--brand-primary)' : '1px solid var(--border-card)',
+                    boxShadow: isSelected ? '0 4px 12px rgba(90, 154, 142, 0.15)' : 'none',
+                    transform: isSelected ? 'scale(1.01)' : 'none',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    background: isSelected ? 'var(--bg-info-card)' : 'var(--bg-card)'
+                  }}
+                >
+                  {isSelected && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '0.5rem',
+                      right: '0.5rem',
+                      background: 'var(--brand-primary)',
+                      color: '#ffffff',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '0.25rem',
+                      zIndex: 10
+                    }}>
+                      ✓ Tracking
+                    </span>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
                   )}
+                  <div className="event-card-banner">
+                    <EventImage 
+                      src={evt.bannerUrl || ''} 
+                      alt="Event Banner" 
+                      containerStyle={{ height: '140px' }}
+                    />
+                  </div>
                   <h4 className="event-card-title">{evt.name || 'Untitled Event'}</h4>
                   <div className="event-card-detail">{evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}</div>
-                  <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited'}</div>
-                  <div className="event-card-actions">
+                  <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? `${evt.capacity.maxAttendees} attendees` : 'Unlimited'}</div>
+                  <div className="event-card-actions" onClick={e => e.stopPropagation()}>
                     <Link to={`/create-event?id=${evt.id}`} className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
+<<<<<<< HEAD
                     {/* ✅ updated */}
                     <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, textAlign: 'center', borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
+=======
+                    <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
                   </div>
                 </div>
-              ))
-            )}
+              );
+            })}
           </div>
         </div>
 
         <div className="admin-grid-layout">
-          <div id="admin-left-col" style={{display: 'flex', flexDirection: 'column', gap: '2rem'}}>
-            <div className="admin-panel-box">
-              <h3 className="admin-panel-title">QR Scanner</h3>
+          <div id="admin-left-col">
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
+              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '1rem'}}>
+                <h3 className="admin-panel-title" style={{margin: 0}}>QR Scanner</h3>
+              </div>
               <div className="scanner-viewfinder" style={{width: '100%', aspectRatio: '4/3', position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', background: '#000'}}>
                 <video ref={videoRef} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1, display: isScanning ? 'block' : 'none'}}></video>
                 <canvas ref={canvasRef} style={{display: 'none'}}></canvas>
@@ -526,12 +846,8 @@ export default function AdminDashboard() {
                 <div style={{fontSize: '0.7rem', fontFamily: 'monospace', color: '#333333'}}>{scanStatus}</div>
               </div>
               <div className="admin-manual-checkin">
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem'}}>
+                <div style={{marginBottom: '0.25rem'}}>
                   <span className="admin-label-small" style={{margin: 0}}>MANUAL TICKET CHECK-IN</span>
-                  <button className="btn btn-sm" style={{fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer'}} onClick={() => {
-                    const id = prompt("Enter Ticket ID to simulate scan:");
-                    if (id) processCheckIn(id);
-                  }}>🧪 Simulate Scan</button>
                 </div>
                 <div className="manual-checkin-row">
                   <input type="text" className="promo-textbox" placeholder="Enter Ticket ID" value={manualTicketId} onChange={e => setManualTicketId(e.target.value)} />
@@ -540,100 +856,250 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="admin-panel-box">
               <h3 className="admin-panel-title">Send Announcement</h3>
               <p className="panel-section-subtitle" style={{margin: 0}}>Post an announcement that will be displayed live on the Attendee Tickets Hub.</p>
               <div className="form-group" style={{margin: 0}}>
                 {/* ✅ updated */}
                 <textarea className="form-control" placeholder="Write announcement here..." value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{width: '100%', minHeight: '80px', fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--border-input)', resize: 'vertical', marginTop: '2rem'}}></textarea>
+=======
+            <div className="admin-panel-box" style={{padding: '1rem'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem'}}>
+                <div style={{width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(90,154,142,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
+                </div>
+                <h3 className="admin-panel-title" style={{margin: 0}}>Send Announcement</h3>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
               </div>
-              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement}>Broadcast Announcement</button>
+              <p className="panel-section-subtitle" style={{marginBottom: '1rem'}}>Post a message that will be displayed live on the Attendee Tickets Hub.</p>
+              <div style={{marginBottom: '0.5rem'}}>
+                <textarea
+                  className="form-control"
+                  placeholder="Write your announcement here..."
+                  value={announcement}
+                  onChange={e => setAnnouncement(e.target.value)}
+                  style={{width: '100%', minHeight: '100px', fontFamily: 'inherit', fontSize: '0.875rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-input)', resize: 'vertical', lineHeight: 1.6, color: 'var(--text-main)', background: 'var(--bg-input)'}}
+                />
+                <p style={{fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.35rem 0 0 0', textAlign: 'right'}}>{announcement.length} characters</p>
+              </div>
+              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement} style={{width: '100%', marginBottom: broadcastedAnnouncement ? '0.75rem' : '0'}}>
+                📢 Broadcast Announcement
+              </button>
+
+              {broadcastedAnnouncement && (
+                <button 
+                  type="button" 
+                  className="btn btn-block btn-lg" 
+                  onClick={deleteAnnouncement} 
+                  style={{ width: '100%', backgroundColor: '#ef4444', color: 'white', border: 'none' }}
+                >
+                  🗑️ Delete Announcement
+                </button>
+              )}
             </div>
 
-            <div className="admin-panel-box">
-              <h3 className="admin-panel-title">Custom Registration Form</h3>
+            <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
+              <div style={{borderBottom: '1px solid var(--divider)', paddingBottom: '1rem'}}>
+                <h3 className="admin-panel-title" style={{margin: 0}}>Custom Registration Form</h3>
+              </div>
               <p className="panel-section-subtitle" style={{margin: 0}}>Configure the questions asked to attendees when they register.</p>
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
                 {formConfig.map((q, idx) => (
-                  <div key={q.id} style={{background: '#fff', border: '1px solid var(--border-card)', borderRadius: '0.375rem', padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'}}>
-                    <div style={{fontSize: '0.85rem'}}>
-                      <strong style={{color: 'var(--text-main)'}}>{q.label}</strong> <span style={{color: 'var(--text-muted)', fontSize: '0.75rem'}}>({q.type})</span>
-                      {q.required && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 600}}> *Required</span>}
-                      {q.options && <><br/><span style={{color: 'var(--text-secondary)', fontSize: '0.75rem'}}>Options: {q.options}</span></>}
+                  <div 
+                    key={q.id} 
+                    draggable
+                    className="custom-reg-card"
+                    onDragStart={(e) => { dragItem.current = idx; e.currentTarget.style.opacity = '0.5'; }}
+                    onDragEnter={(e) => { dragOverItem.current = idx; e.preventDefault(); }}
+                    onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; handleSort(); }}
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', cursor: 'grab'}}
+                  >
+                    <div className="custom-reg-info" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
+                      {/* Drag icon placeholder */}
+                      <svg className="custom-reg-drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
+
+                      <div className="custom-reg-text-container" style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
+                        <div className="custom-reg-label-group" style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
+                          <strong className="custom-reg-label" style={{color: 'var(--text-main)'}}>
+                            {q.label.replace(/\s*\([Oo]ptional\)/gi, '')}
+                            {(q.required === true || q.required === 'true') && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
+                          </strong>
+                          <span className="custom-reg-badge" style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
+                        </div>
+                      </div>
                     </div>
-                    <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.2rem 0.5rem', fontSize: '0.7rem', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2'}} onClick={() => handleDeleteQuestion(idx)}>Delete</button>
+
+                    <div className="custom-reg-controls" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0}}>
+                      {/* Mobile friendly Move Up/Down Controls */}
+                      <div className="custom-reg-move-controls" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                        <button type="button" onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === 0 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <button type="button" onClick={() => handleMove(idx, 1)} disabled={idx === formConfig.length - 1} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === formConfig.length - 1 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === formConfig.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                      </div>
+
+                      {/* Required Toggle Switch */}
+                      <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}} className="required-text-mobile">
+                          {q.required ? 'Req' : 'Opt'}
+                        </span>
+                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)'}} className="required-text-desktop">
+                          {q.required ? 'Required' : 'Optional'}
+                        </span>
+                        <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
+                          <input
+                            type="checkbox"
+                            checked={!!q.required}
+                            onChange={() => handleToggleRequired(idx)}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+
+                      {/* Delete Question */}
+                      <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                <h4 style={{fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem'}}>Add New Question</h4>
-                <div className="form-group">
-                  <label className="form-label" style={{fontSize: '0.8rem'}}>Question Label</label>
-                  <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" style={{fontSize: '0.8rem'}}>Type</label>
-                  <select className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
-                    <option value="text">Short Text</option>
-                    <option value="textarea">Long Text</option>
-                    <option value="radio">Multiple Choice (Radio)</option>
-                    <option value="select">Dropdown</option>
-                    <option value="toggle">Yes/No Toggle</option>
-                  </select>
-                </div>
-                {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
-                  <div className="form-group">
-                    <label className="form-label" style={{fontSize: '0.8rem'}}>Options (comma separated)</label>
-                    <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} />
+              <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                <h4 style={{fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Add New Question</h4>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                  <div className="form-group" style={{margin: 0, gap: '0.35rem'}}>
+                    <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Question Label</label>
+                    <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} placeholder="e.g. Diet Preferences" />
                   </div>
-                )}
-                <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                  <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer'}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
-                  <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', cursor: 'pointer'}}>Required Question</label>
+                  <div className="form-group" style={{margin: 0, gap: '0.35rem'}}>
+                    <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Type</label>
+                    <select className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
+                      <option value="text">Short Text</option>
+                      <option value="textarea">Long Text</option>
+                      <option value="radio">Multiple Choice (Radio)</option>
+                      <option value="select">Dropdown</option>
+                      <option value="toggle">Yes/No Toggle</option>
+                    </select>
+                  </div>
+                  {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
+                    <div className="form-group" style={{margin: 0, gap: '0.35rem'}}>
+                      <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Options (comma separated)</label>
+                      <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Vegetarian,Vegan,Gluten-free" />
+                    </div>
+                  )}
+                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                    <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                    <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Required Question</label>
+                  </div>
+                  <button type="button" className="btn btn-secondary btn-sm" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Question
+                  </button>
                 </div>
-                <button type="button" className="btn btn-secondary btn-sm" style={{marginTop: '0.5rem'}} onClick={handleAddQuestion}>+ Add Question</button>
               </div>
-              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleSaveFormConfig}>Save Form Configuration</button>
+              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleSaveFormConfig} style={{width: '100%'}}>Save Form Configuration</button>
             </div>
           </div>
 
-          <div className="admin-panel-box" id="admin-rsvp-box">
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider)', paddingBottom: '0.75rem', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.75rem'}}>
-              <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>RSVP & Registration Search</h3>
-              <div className="view-tabs" style={{display: 'flex', gap: '0.25rem', background: 'var(--bg-info-card)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid var(--border-card)', marginLeft: 'auto'}}>
-                <button type="button" style={{fontSize: '0.75rem', padding: '0.35rem 0.75rem', border: 'none', borderRadius: '0.375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', background: activeTab === 'all' ? 'var(--brand-primary)' : 'transparent', color: activeTab === 'all' ? '#ffffff' : 'var(--text-secondary)'}} onClick={() => {setActiveTab('all'); setStatusFilter('all');}}>All Registrations</button>
-                <button type="button" style={{fontSize: '0.75rem', padding: '0.35rem 0.75rem', border: 'none', borderRadius: '0.375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', background: activeTab === 'checked-in' ? 'var(--brand-primary)' : 'transparent', color: activeTab === 'checked-in' ? '#ffffff' : 'var(--text-secondary)'}} onClick={() => {setActiveTab('checked-in'); setStatusFilter('checked-in');}}>Post-Event Attendees (Checked-In)</button>
+          <div className="admin-panel-box" id="admin-rsvp-box" style={{paddingTop: '1rem', paddingBottom: '1rem'}}>
+            <div className="rsvp-header-row">
+              <h3 className="rsvp-title">RSVP & Registration Search</h3>
+              <div className="rsvp-view-tabs">
+                <button type="button" className={`rsvp-tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => {setActiveTab('all'); setStatusFilter('all');}}>All Registrations</button>
+                <button type="button" className={`rsvp-tab-btn ${activeTab === 'checked-in' ? 'active' : ''}`} onClick={() => {setActiveTab('checked-in'); setStatusFilter('checked-in');}}>Post-Event Attendees (Checked-In)</button>
               </div>
             </div>
-            <div className="search-filter-row" style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
-              <input type="text" className="form-control" placeholder="Search by email or Ticket ID..." style={{flex: 1, minWidth: '180px'}} value={searchFilter} onChange={e => setSearchFilter(e.target.value)} />
-              <select className="form-control" style={{width: '130px', cursor: 'pointer', padding: '0.25rem 0.5rem'}} value={statusFilter} onChange={e => {setStatusFilter(e.target.value); setActiveTab(e.target.value === 'checked-in' ? 'checked-in' : 'all');}}>
-                <option value="all">All Statuses</option>
-                <option value="unused">Unused</option>
-                <option value="checked-in">Checked In</option>
-              </select>
-              <select className="form-control" style={{width: '140px', cursor: 'pointer', padding: '0.25rem 0.5rem'}} value={approvalFilter} onChange={e => setApprovalFilter(e.target.value)}>
-                <option value="all">All Approvals</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-              <button type="button" className="btn btn-secondary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg-info-card)', border: '1px solid var(--border-card)', color: 'var(--text-main)'}} onClick={() => exportCSV(filteredTickets, 'ebc_registrations_filtered.csv')}>
-                📥 Export Filtered CSV
-              </button>
-              <button type="button" className="btn btn-primary btn-sm" style={{padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', color: '#ffffff'}} onClick={() => exportCSV(tickets.filter(t => t.status === 'checked-in'), 'ebc_post_event_attendees.csv')}>
-                📥 Export Checked-In
-              </button>
+            {/* Filters Row */}
+            <div className="rsvp-filters-grid">
+              {/* Search input with magnifying glass icon */}
+              <div className="rsvp-search-container">
+                <span className="rsvp-search-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input 
+                  type="text" 
+                  className="rsvp-search-input" 
+                  placeholder="Search by email or Ticket ID..." 
+                  value={searchFilter} 
+                  onChange={e => setSearchFilter(e.target.value)} 
+                />
+              </div>
+
+              {/* Status and Approval filters */}
+              <div className="rsvp-selects-group">
+                <select 
+                  className="rsvp-select" 
+                  value={statusFilter} 
+                  onChange={e => {setStatusFilter(e.target.value); setActiveTab(e.target.value === 'checked-in' ? 'checked-in' : 'all');}}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="unused">Unused</option>
+                  <option value="checked-in">Checked In</option>
+                </select>
+
+                <select 
+                  className="rsvp-select" 
+                  value={approvalFilter} 
+                  onChange={e => setApprovalFilter(e.target.value)}
+                >
+                  <option value="all">All Approvals</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active filters status and export buttons row */}
+            <div className="rsvp-status-bar">
+              <div className="rsvp-count-info">
+                <span className="rsvp-count-text">
+                  Showing {filteredTickets.length} of {tickets.length} registrations
+                </span>
+                {(searchFilter || statusFilter !== 'all' || approvalFilter !== 'all') && (
+                  <button 
+                    type="button" 
+                    onClick={() => {setSearchFilter(''); setStatusFilter('all'); setApprovalFilter('all'); setActiveTab('all');}} 
+                    className="rsvp-clear-btn"
+                  >
+                    ✕ Clear all filters
+                  </button>
+                )}
+              </div>
+
+              <div className="rsvp-actions-group">
+                <button 
+                  type="button" 
+                  className="rsvp-action-btn secondary" 
+                  onClick={() => exportCSV(filteredTickets, 'registrations_filtered.csv')}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Filtered CSV
+                </button>
+                <button 
+                  type="button" 
+                  className="rsvp-action-btn primary" 
+                  onClick={() => exportCSV(tickets.filter(t => t.status === 'checked-in'), 'post_event_attendees.csv')}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export Checked-In
+                </button>
+              </div>
             </div>
             <div className="checked-in-list-container" style={{flex: 1, minHeight: 0, overflow: 'auto'}}>
               <table className="attendees-table">
                 <thead>
                   <tr>
-                    <th style={{padding: '0.75rem 1rem'}}>Email</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Ticket ID</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Status</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Approval</th>
-                    <th style={{padding: '0.75rem 1rem'}}>Action</th>
+                    <th style={{padding: '0.75rem 1rem'}}>Name</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Email</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Ticket ID</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Status</th>
+                    <th className="desktop-only-col" style={{padding: '0.75rem 1rem'}}>Approval</th>
+                    <th style={{padding: '0.75rem 1rem', textAlign: 'center'}}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -650,34 +1116,46 @@ export default function AdminDashboard() {
 
                       return (
                         <tr key={t.id}>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><button onClick={() => setSelectedTicket(t)} style={{background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, borderBottom: '1px dashed var(--brand-primary)', cursor: 'pointer'}}>{t.email}</button></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="monospaced-code" style={{fontSize: '0.75rem'}}>{t.id}</span></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className={`badge-status ${isChecked ? 'checked-in' : 'unused'}`}>{isChecked ? 'Checked In' : 'Unused'}</span></td>
-                          <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="badge-status" style={approvalStyle}>{approval.toUpperCase()}</span></td>
                           <td style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}>
-                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', whiteSpace: 'nowrap'}}>
-                              {approval === 'pending' && (
-                                <>
-                                  <button className="btn-action-checkin" style={{backgroundColor: '#10b981'}} onClick={() => updateAttendeeApproval(t.id, 'approved')}>Approve</button>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444'}} onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
-                                </>
-                              )}
-                              {approval === 'approved' && !isChecked && (
-                                <>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'var(--brand-primary)'}} onClick={() => processCheckIn(t.id)}>Check In</button>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444'}} onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
-                                </>
-                              )}
-                              {approval === 'approved' && isChecked && (
-                                <>
-                                  <span style={{color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500, marginRight: '0.25rem'}}>Checked-in {t.timestamp ? t.timestamp.split(',')[1] : ''}</span>
-                                  <button className="btn-action-checkin" style={{backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.15rem 0.4rem', fontSize: '0.65rem'}} onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
-                                </>
-                              )}
-                              {approval === 'rejected' && (
+                            {(() => {
+                              const user = usersMap[t.email];
+                              const name = user ? [user.firstName, user.lastName].filter(Boolean).join(' ') : '';
+                              return (
+                                <button onClick={() => setSelectedTicket(t)} style={{background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, borderBottom: '1px dashed var(--brand-primary)', cursor: 'pointer'}}>
+                                  {name || '—'}
+                                </button>
+                              );
+                            })()}
+                          </td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap', fontSize: '0.82rem', color: 'var(--text-secondary)'}}>{t.email}</td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="monospaced-code" style={{fontSize: '0.75rem'}}>{t.id}</span></td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className={`badge-status ${isChecked ? 'checked-in' : 'unused'}`}>{isChecked ? 'Checked In' : 'Unused'}</span></td>
+                          <td className="desktop-only-col" style={{padding: '0.75rem 1rem', whiteSpace: 'nowrap'}}><span className="badge-status" style={approvalStyle}>{approval.toUpperCase()}</span></td>
+                          <td style={{padding: '0.75rem 1rem', textAlign: 'center', verticalAlign: 'middle'}}>
+                            {approval === 'pending' && (
+                              <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>
                                 <button className="btn-action-checkin" style={{backgroundColor: '#10b981'}} onClick={() => updateAttendeeApproval(t.id, 'approved')}>Approve</button>
-                              )}
-                            </div>
+                                <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
+                              </div>
+                            )}
+                            {approval === 'approved' && !isChecked && (
+                              <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>
+                                <button className="btn-action-checkin" style={{backgroundColor: 'var(--brand-primary)'}} onClick={() => processCheckIn(t.id)}>Check In</button>
+                                <button className="btn-action-reject" onClick={() => updateAttendeeApproval(t.id, 'rejected')}>Reject</button>
+                              </div>
+                            )}
+                             {approval === 'approved' && isChecked && (
+                              <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center'}}>
+                                <span className="btn-action-checkin" style={{backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.2)', cursor: 'default', pointerEvents: 'none'}}>
+                                  Checked-in {formatCheckInTime(t.timestamp)}
+                                </span>
+                              </div>
+                            )}
+                            {approval === 'rejected' && (
+                              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                <button className="btn-action-checkin" style={{backgroundColor: '#10b981'}} onClick={() => updateAttendeeApproval(t.id, 'approved')}>Approve</button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
@@ -711,7 +1189,9 @@ export default function AdminDashboard() {
               {selectedTicket.answers && Object.keys(selectedTicket.answers).length > 0 ? (
                 <div style={{marginTop: '1rem', borderTop: '1px solid var(--divider)', paddingTop: '1rem'}}>
                   <h4 style={{fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-main)', fontFamily: '"Outfit", sans-serif'}}>Attendee Registration Answers</h4>
-                  {Object.entries(selectedTicket.answers).map(([key, value]) => (
+                  {Object.entries(selectedTicket.answers)
+                    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                    .map(([key, value]) => (
                     <div key={key} style={{marginBottom: '0.75rem', background: 'var(--bg-info-card)', padding: '0.6rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-card)'}}>
                       <p style={{fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.15rem', textTransform: 'uppercase', letterSpacing: '0.02em'}}>{key}</p>
                       <p style={{fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500, wordBreak: 'break-word', whiteSpace: 'pre-wrap', margin: 0}}>{value || 'No answer provided.'}</p>

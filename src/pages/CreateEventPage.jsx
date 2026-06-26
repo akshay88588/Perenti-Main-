@@ -1,10 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { signInAnonymously } from "firebase/auth";
 import { db, storage, auth } from '../config/firebase';
+
+const promiseWithTimeout = (promise, ms, timeoutError) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutError)), ms))
+  ]);
+};
+
+const isValidUrl = (urlString) => {
+  if (!urlString) return true;
+  // Reject Windows-style local paths (e.g. C:\path or D:\path) or containing backslashes
+  if (/^[A-Za-z]:\\/.test(urlString) || urlString.includes('\\')) {
+    return false;
+  }
+  // Reject file:// protocol
+  if (urlString.startsWith('file://')) {
+    return false;
+  }
+  if (urlString.startsWith('/') || (!urlString.includes('://') && (urlString.endsWith('.jpg') || urlString.endsWith('.png') || urlString.endsWith('.jpeg') || urlString.endsWith('.webp') || urlString.endsWith('.gif')))) {
+    return true;
+  }
+  try {
+    const url = new URL(urlString);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch (_) {
+    return false;
+  }
+};
+
+const compressImage = (file, maxWidth = 800, maxHeight = 600) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
 
 export default function CreateEventPage() {
   const { session } = useAuth();
@@ -28,11 +93,62 @@ export default function CreateEventPage() {
     address: '',
     mapsLink: '',
     maxAttendees: '',
-    waitlistEnabled: false
+    waitlistEnabled: false,
+    ticketPrice: ''
   });
   
   const [bannerFile, setBannerFile] = useState(null);
   const [originalBannerUrl, setOriginalBannerUrl] = useState('');
+
+  const [customRegistrationFields, setCustomRegistrationFields] = useState(() => {
+    try {
+      const stored = localStorage.getItem('customRegistrationForm');
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    return [
+      { id: 'q-building', type: 'text', label: 'What are you building?', required: true },
+      { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
+      { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
+      { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
+      { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
+      { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
+      { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
+      { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
+    ];
+  });
+
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
+
+  const handleAddQuestion = () => {
+    if (!newQuestion.label.trim()) {
+      alert("Question Label is required!");
+      return;
+    }
+    if ((newQuestion.type === 'radio' || newQuestion.type === 'select') && !newQuestion.options.trim()) {
+      alert("Options are required for Multiple Choice or Dropdown!");
+      return;
+    }
+
+    const id = 'q-custom-' + Date.now();
+    setCustomRegistrationFields(prev => [...prev, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
+    setNewQuestion({ label: '', type: 'text', options: '', required: true });
+  };
+
+  const handleDeleteQuestion = (index) => {
+    setCustomRegistrationFields(prev => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  const handleToggleRequired = (index) => {
+    setCustomRegistrationFields(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], required: !updated[index].required };
+      return updated;
+    });
+  };
 
   useEffect(() => {
     if (!session || session.role !== 'admin') {
@@ -65,7 +181,8 @@ export default function CreateEventPage() {
           address: "Vanasthalipuram, Hyderabad",
           mapsLink: "",
           maxAttendees: "60",
-          waitlistEnabled: false
+          waitlistEnabled: false,
+          ticketPrice: ''
         });
         setOriginalBannerUrl("ebc_meetup_banner.jpg");
         return;
@@ -86,9 +203,16 @@ export default function CreateEventPage() {
           address: evt.venue?.address || '',
           mapsLink: evt.venue?.mapsLink || '',
           maxAttendees: evt.capacity?.maxAttendees || '',
-          waitlistEnabled: evt.capacity?.waitlistEnabled || false
+          waitlistEnabled: evt.capacity?.waitlistEnabled || false,
+          ticketPrice: evt.ticketPrice != null ? String(evt.ticketPrice) : ''
         });
         if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
+        if (evt.customRegistrationFields) {
+          setCustomRegistrationFields(evt.customRegistrationFields);
+          localStorage.setItem('customRegistrationForm', JSON.stringify(evt.customRegistrationFields));
+        } else {
+          setCustomRegistrationFields([]);
+        }
       } else {
         // Try local storage fallback
         const localEvents = JSON.parse(localStorage.getItem('events')) || [];
@@ -106,9 +230,16 @@ export default function CreateEventPage() {
             address: evt.venue?.address || '',
             mapsLink: evt.venue?.mapsLink || '',
             maxAttendees: evt.capacity?.maxAttendees || '',
-            waitlistEnabled: evt.capacity?.waitlistEnabled || false
+            waitlistEnabled: evt.capacity?.waitlistEnabled || false,
+            ticketPrice: evt.ticketPrice != null ? String(evt.ticketPrice) : ''
           });
           if (evt.bannerUrl) setOriginalBannerUrl(evt.bannerUrl);
+          if (evt.customRegistrationFields) {
+            setCustomRegistrationFields(evt.customRegistrationFields);
+            localStorage.setItem('customRegistrationForm', JSON.stringify(evt.customRegistrationFields));
+          } else {
+            setCustomRegistrationFields([]);
+          }
         } else {
           setError("Event not found locally or in Firestore.");
         }
@@ -139,11 +270,29 @@ export default function CreateEventPage() {
     setLoading(true);
 
     try {
-      if (!auth.currentUser) {
-        try {
-          await signInAnonymously(auth);
-        } catch (err) {
-          console.warn("Anonymous auth fallback failed:", err);
+      // Validate URLs
+      if (formData.bannerUrl && !isValidUrl(formData.bannerUrl)) {
+        setError("Event Banner URL is invalid. Please enter a valid URL (starting with http:// or https://) or a local asset path.");
+        setLoading(false);
+        return;
+      }
+      if (formData.mapsLink && !isValidUrl(formData.mapsLink)) {
+        setError("Google Maps Link is invalid. Please enter a valid URL starting with http:// or https://");
+        setLoading(false);
+        return;
+      }
+
+      if (auth) {
+        if (!auth.currentUser) {
+          try {
+            await promiseWithTimeout(
+              signInAnonymously(auth),
+              4000,
+              "Authentication timed out."
+            );
+          } catch (err) {
+            console.warn("Anonymous auth fallback failed:", err);
+          }
         }
       }
 
@@ -151,69 +300,121 @@ export default function CreateEventPage() {
 
       if (bannerFile) {
         try {
-          const storageRef = ref(storage, 'event-banners/' + Date.now() + '_' + bannerFile.name.replace(/[^a-zA-Z0-9.]/g, ''));
-          const snapshot = await uploadBytes(storageRef, bannerFile);
-          finalBannerUrl = await getDownloadURL(snapshot.ref);
+          if (storage) {
+            const storageRef = ref(storage, 'event-banners/' + Date.now() + '_' + bannerFile.name.replace(/[^a-zA-Z0-9.]/g, ''));
+            const snapshot = await promiseWithTimeout(
+              uploadBytes(storageRef, bannerFile),
+              6000,
+              "Banner upload timed out."
+            );
+            finalBannerUrl = await getDownloadURL(snapshot.ref);
+          } else {
+            throw new Error("Storage not configured");
+          }
         } catch (uploadErr) {
-          console.warn("Banner upload failed (likely CORS or permission issue). Proceeding without new image.", uploadErr);
-          // Fallback to existing or empty if upload fails
-          if (!formData.bannerUrl && originalBannerUrl) {
-            finalBannerUrl = originalBannerUrl;
+          console.warn("Banner upload failed or storage offline. Converting to base64 Data URL fallback:", uploadErr);
+          try {
+            finalBannerUrl = await compressImage(bannerFile);
+          } catch (readErr) {
+            console.error("FileReader base64 conversion failed:", readErr);
+            if (!formData.bannerUrl && originalBannerUrl) {
+              finalBannerUrl = originalBannerUrl;
+            }
           }
         }
       } else if (!formData.bannerUrl && originalBannerUrl) {
         finalBannerUrl = originalBannerUrl;
       }
 
+      // customRegistrationFields state is saved directly in eventData
+
       const eventData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        bannerUrl: finalBannerUrl,
+        bannerUrl: finalBannerUrl || '',
         category: formData.category,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        registrationDeadline: formData.registrationDeadline,
+        registrationDeadline: formData.registrationDeadline || '',
         venue: {
           name: formData.venueName.trim(),
           address: formData.address.trim(),
           mapsLink: formData.mapsLink.trim(),
         },
         capacity: {
-          maxAttendees: parseInt(formData.maxAttendees, 10),
-          waitlistEnabled: formData.waitlistEnabled
+          maxAttendees: parseInt(formData.maxAttendees, 10) || 0,
+          waitlistEnabled: formData.waitlistEnabled || false
         },
-        createdBy: session.email,
+        ticketPrice: formData.ticketPrice !== '' ? parseFloat(formData.ticketPrice) : null,
+        customRegistrationFields: customRegistrationFields,
+        createdBy: session?.email || 'admin@perenti.com',
         status: 'active'
       };
 
-      if (isEditMode && editId !== 'main') {
-        const eventRef = doc(db, 'events', editId);
-        await updateDoc(eventRef, { ...eventData, createdAt: serverTimestamp() });
+      let docId = editId;
+
+      if (db) {
+        if (isEditMode && editId) {
+          const eventRef = doc(db, 'events', editId);
+          await promiseWithTimeout(
+            setDoc(eventRef, { ...eventData, updatedAt: serverTimestamp() }, { merge: true }),
+            5000,
+            "Firestore write timed out (offline or network error)."
+          );
+        } else {
+          const eventsRef = collection(db, 'events');
+          const docRef = await promiseWithTimeout(
+            addDoc(eventsRef, { ...eventData, createdAt: serverTimestamp() }),
+            5000,
+            "Firestore write timed out (offline or network error)."
+          );
+          docId = docRef.id;
+        }
       } else {
-        const eventsRef = collection(db, 'events');
-        await addDoc(eventsRef, { ...eventData, createdAt: serverTimestamp() });
+        console.warn("Firebase Firestore is not configured. Saving locally only.");
       }
 
-      setTimeout(() => {
-        navigate('/admin-dashboard');
-      }, 1000);
+      // Always save to localStorage as fallback/sync
+      try {
+        const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+        const newLocalEvent = {
+          id: docId || (isEditMode && editId ? editId : 'local_' + Date.now()),
+          ...eventData,
+          createdAt: isEditMode && editId ? (localEvents.find(e => e.id === editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        let updatedEvents;
+        if (isEditMode && editId) {
+          updatedEvents = localEvents.map(e => e.id === editId ? newLocalEvent : e);
+        } else {
+          updatedEvents = [...localEvents, newLocalEvent];
+        }
+        localStorage.setItem('events', JSON.stringify(updatedEvents));
+      } catch (storageErr) {
+        console.warn("Failed to save event to local storage fallback:", storageErr);
+      }
+
+      setLoading(false);
+      alert(isEditMode ? "Event updated successfully!" : "Event created successfully!");
+      navigate('/admin-dashboard');
 
     } catch (err) {
       console.error("Save failed:", err);
-      setError("Failed to save event. " + err.message);
+      setError("Failed to save event. " + (err?.message || err));
       setLoading(false);
     }
   };
 
   return (
-    <div className="dashboard-page-wrapper">
+    <div className="create-event-page-wrapper">
       <header className="site-header">
-        <div className="header-container">
+        <div className="header-container create-event-header-container">
           <Link to="/" className="brand-link">
             <span className="brand-name">perenti</span>
           </Link>
           
-          <div className="header-actions" style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+          <div className="header-actions create-event-header-actions">
             <span className="session-email-text" style={{fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)'}}>{session?.email}</span>
             <Link to="/admin-dashboard" className="btn btn-secondary btn-sm">Back to Dashboard</Link>
             <button type="button" className="btn btn-outline btn-sm" onClick={() => {
@@ -224,7 +425,7 @@ export default function CreateEventPage() {
         </div>
       </header>
 
-      <main className="admin-main-content" style={{flex: 1, maxWidth: '800px', width: '100%', margin: '0 auto', padding: '2.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+      <main className="admin-main-content create-event-main-content">
         <div className="admin-header-row" style={{marginBottom: '1rem'}}>
           <div className="admin-title-section">
             <h1 style={{fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)'}}>{isEditMode ? 'Edit Event' : 'Create New Event'}</h1>
@@ -242,7 +443,7 @@ export default function CreateEventPage() {
 
         <form onSubmit={handleSubmit}>
           
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
               Basic Information
@@ -259,7 +460,7 @@ export default function CreateEventPage() {
 
             <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
               <label className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Event Banner (Upload OR URL)</label>
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+              <div className="responsive-grid-2-col">
                 <input type="file" id="evt-banner-file" className="form-control" accept="image/*" style={{width: '100%', padding: '0.55rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} title="Upload Image" onChange={handleFileChange} />
                 <input type="url" id="evt-banner-url" name="bannerUrl" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} placeholder="Or paste image URL here" value={formData.bannerUrl} onChange={handleChange} />
               </div>
@@ -280,12 +481,12 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               Date & Time
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div className="responsive-grid-2-col">
               <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
                 <label htmlFor="evt-start" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Start Date & Time <span style={{color: '#ef4444'}}>*</span></label>
                 <input type="datetime-local" id="evt-start" name="startDate" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} required value={formData.startDate} onChange={handleChange} />
@@ -301,7 +502,7 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
               Venue
@@ -320,27 +521,136 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          <div className="form-section-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '1rem', padding: '2rem', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem'}}>
+          <div className="form-section-card">
             <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              Capacity
+              Capacity &amp; Pricing
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div className="responsive-grid-2-col">
               <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
                 <label htmlFor="evt-capacity" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Maximum Attendees <span style={{color: '#ef4444'}}>*</span></label>
                 <input type="number" id="evt-capacity" name="maxAttendees" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} required min="1" placeholder="e.g. 100" value={formData.maxAttendees} onChange={handleChange} />
               </div>
-              <div className="form-group toggle-group" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', marginTop: '1.5rem', marginBottom: '1.25rem'}}>
-                <label htmlFor="evt-waitlist" className="form-label" style={{marginBottom: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Enable Waitlist?</label>
-                <label className="toggle-switch">
-                  <input type="checkbox" id="evt-waitlist" name="waitlistEnabled" checked={formData.waitlistEnabled} onChange={handleChange} />
-                  <span className="toggle-slider"></span>
+              <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
+                <label htmlFor="evt-ticket-price" className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>
+                  Ticket Price (₹) <span style={{fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-secondary)'}}>— leave blank for free</span>
                 </label>
+                <input
+                  type="number"
+                  id="evt-ticket-price"
+                  name="ticketPrice"
+                  className="form-control"
+                  style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}}
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 460"
+                  value={formData.ticketPrice}
+                  onChange={handleChange}
+                />
               </div>
+            </div>
+            <div className="form-group toggle-group" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', marginBottom: '1.25rem'}}>
+              <label htmlFor="evt-waitlist" className="form-label" style={{marginBottom: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Enable Waitlist?</label>
+              <label className="toggle-switch">
+                <input type="checkbox" id="evt-waitlist" name="waitlistEnabled" checked={formData.waitlistEnabled} onChange={handleChange} />
+                <span className="toggle-slider"></span>
+              </label>
             </div>
           </div>
 
-          <div className="form-actions" style={{display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem'}}>
+          <div className="form-section-card" style={{padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
+            <h2 className="form-section-title" style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--brand-primary)'}}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+              Custom Registration Questions
+            </h2>
+            <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0}}>
+              Configure custom registration fields requested from attendees for this specific event.
+            </p>
+
+            <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem'}}>
+              {customRegistrationFields.map((q, idx) => (
+                <div key={q.id || idx} className="custom-reg-card" style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)'}}>
+                  <div className="custom-reg-info" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
+                    <div className="custom-reg-text-container" style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                      <div className="custom-reg-label-group" style={{display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap'}}>
+                        <strong className="custom-reg-label" style={{color: 'var(--text-main)'}}>{q.label.replace(/\s*\([Oo]ptional\)/g, '')}</strong>
+                        <span className="custom-reg-badge" style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
+                        {(q.required === true || q.required === 'true') ? (
+                          <span className="custom-reg-indicator" style={{color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Required</span>
+                        ) : (
+                          <span className="custom-reg-indicator" style={{color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem'}}>● Optional</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="custom-reg-controls" style={{display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0}}>
+                    {/* Required Toggle */}
+                    <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                      <span className="required-text-mobile" style={{fontSize: '0.75rem', fontWeight: 600, color: (q.required === true || q.required === 'true') ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}}>
+                        {(q.required === true || q.required === 'true') ? 'Req' : 'Opt'}
+                      </span>
+                      <span className="required-text-desktop" style={{fontSize: '0.75rem', fontWeight: 600, color: (q.required === true || q.required === 'true') ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                        {(q.required === true || q.required === 'true') ? 'Required' : 'Optional'}
+                      </span>
+                      <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
+                        <input 
+                          type="checkbox" 
+                          checked={q.required === true || q.required === 'true'} 
+                          onChange={() => handleToggleRequired(idx)} 
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    {/* Delete button */}
+                    <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{background: 'var(--bg-info-card)', border: '1px solid var(--border-input)', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem'}}>
+              <h4 style={{fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', margin: 0}}>Add New Custom Question</h4>
+              
+              <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem'}}>
+                <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Question Label</label>
+                <input type="text" className="form-control" style={{fontSize: '0.85rem', width: '100%', padding: '0.5rem 0.75rem'}} value={newQuestion.label} onChange={e => setNewQuestion({...newQuestion, label: e.target.value})} placeholder="e.g. T-Shirt Size" />
+              </div>
+              
+              <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem'}}>
+                <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Question Type</label>
+                <select className="form-control" style={{fontSize: '0.85rem', width: '100%', padding: '0.5rem 0.75rem'}} value={newQuestion.type} onChange={e => setNewQuestion({...newQuestion, type: e.target.value})}>
+                  <option value="text">Short Text</option>
+                  <option value="textarea">Long Text</option>
+                  <option value="radio">Multiple Choice (Radio Buttons)</option>
+                  <option value="select">Dropdown List</option>
+                  <option value="toggle">Yes/No Switch</option>
+                </select>
+              </div>
+
+              {(newQuestion.type === 'radio' || newQuestion.type === 'select') && (
+                <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem'}}>
+                  <label className="form-label" style={{fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)'}}>Options (comma separated)</label>
+                  <input type="text" className="form-control" style={{fontSize: '0.85rem', width: '100%', padding: '0.5rem 0.75rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Small,Medium,Large" />
+                </div>
+              )}
+
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0'}}>
+                <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Is this question required?</label>
+              </div>
+
+              <button type="button" className="btn btn-secondary btn-sm" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Question to Event
+              </button>
+            </div>
+          </div>
+
+          <div className="form-actions">
             <Link to="/admin-dashboard" className="btn btn-outline btn-lg">Cancel</Link>
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{minWidth: '150px'}}>
               {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Event' : 'Create Event')}

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, onSnapshot } from "firebase/firestore";
 import { db } from '../config/firebase';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 export default function UserDashboard() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [announcement, setAnnouncement] = useState('');
-  const [events, setEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [eventsMap, setEventsMap] = useState({}); // eventId -> event data
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,28 +20,36 @@ export default function UserDashboard() {
       return;
     }
 
-    const checkAnnouncements = () => {
-      const latestAnnouncement = localStorage.getItem('latestAnnouncement');
-      if (latestAnnouncement) {
-        setAnnouncement(latestAnnouncement);
+    const unsubAnn = onSnapshot(doc(db, 'settings', 'announcement'), (docSnap) => {
+      if (docSnap.exists()) {
+        setAnnouncement(docSnap.data().text || '');
       } else {
         setAnnouncement('');
       }
-    };
-    checkAnnouncements();
-    const interval = setInterval(checkAnnouncements, 2000);
+    });
 
     const loadData = async () => {
       try {
-        // Load events
+        // 1. Load all events into a map so we can look up by eventId
         const eventsSnapshot = await getDocs(collection(db, 'events'));
-        const eventsList = [];
+        const map = {};
         eventsSnapshot.forEach((docSnap) => {
-          eventsList.push({ id: docSnap.id, ...docSnap.data() });
+          map[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
         });
-        setEvents(eventsList);
+        
+        // Merge local storage events as fallback
+        try {
+          const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+          localEvents.forEach(evt => {
+            if (!map[evt.id]) {
+              map[evt.id] = evt;
+            }
+          });
+        } catch (err) {}
+        
+        setEventsMap(map);
 
-        // Load tickets
+        // 2. Load only this user's tickets
         const q = query(collection(db, 'tickets'), where('email', '==', session.email));
         const querySnapshot = await getDocs(q);
         const ticketsList = [];
@@ -56,7 +66,7 @@ export default function UserDashboard() {
 
     loadData();
 
-    // Poll tickets live updates
+    // Poll tickets for live check-in status updates
     const pollInterval = setInterval(async () => {
       try {
         const q = query(collection(db, 'tickets'), where('email', '==', session.email));
@@ -66,29 +76,134 @@ export default function UserDashboard() {
           ticketsList.push({ id: docSnap.id, ...docSnap.data() });
         });
         setTickets(ticketsList);
-      } catch(e) {
+      } catch (e) {
         console.error("Error polling tickets", e);
       }
-    }, 1000);
+    }, 5000); // reduced to every 5s to avoid hammering Firestore
 
     return () => {
-      clearInterval(interval);
+      unsubAnn();
       clearInterval(pollInterval);
     };
   }, [session, navigate]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = () => window.print();
+
+  // Helper: safely get venue string from object or string
+  const getVenueStr = (venue) => {
+    if (!venue) return null;
+    if (typeof venue === 'object') {
+      return [venue.name, venue.address].filter(Boolean).join(', ') || null;
+    }
+    return venue;
+  };
+
+  // Helper: format date string from event
+  const getDateStr = (event) => {
+    if (!event) return 'TBA';
+    if (event.startDate) {
+      try {
+        return new Date(event.startDate).toLocaleDateString('en-IN', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      } catch { return event.startDate; }
+    }
+    return 'TBA';
+  };
+
+  // Helper: format time string from event
+  const getTimeStr = (event) => {
+    if (!event) return null;
+    const parts = [event.startTime, event.endTime].filter(Boolean);
+    if (parts.length === 0) return null;
+    const time = parts.join(' - ');
+    return event.timezone ? `${time} (${event.timezone})` : time;
+  };
+
+  const generateGoogleCalendarUrl = (event, fallbackName) => {
+    const name = (event?.name || fallbackName || 'Upcoming Event').trim();
+    const text = encodeURIComponent(name);
+    
+    let startDate = new Date();
+    let endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour default
+    
+    if (event?.startDate) {
+      const parsedStart = new Date(event.startDate);
+      if (!isNaN(parsedStart.getTime())) {
+        startDate = parsedStart;
+        endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
+        if (event.endDate) {
+          const parsedEnd = new Date(event.endDate);
+          if (!isNaN(parsedEnd.getTime())) {
+            endDate = parsedEnd;
+          }
+        }
+      }
+    }
+
+    const formatGCalDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '');
+    const dates = `${formatGCalDate(startDate)}/${formatGCalDate(endDate)}`;
+    
+    let desc = (event?.description || '').trim();
+    if (!desc) {
+      desc = `Join us for ${name}! Please present your digital pass at the venue.`;
+    }
+    const details = encodeURIComponent(desc);
+    
+    let loc = getVenueStr(event?.venue) || '';
+    loc = loc.trim();
+    if (!loc) {
+      loc = 'TBA';
+    }
+    const location = encodeURIComponent(loc);
+    
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}`;
+  };
+
+  const handleDownloadPDF = async (ticketId) => {
+    const element = document.getElementById(`ticket-${ticketId}`);
+    if (!element) return;
+    try {
+      // Temporarily hide actions bar if it is inside the element
+      const actions = element.querySelector('.ticket-actions-bar');
+      if (actions) actions.style.display = 'none';
+
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
+      
+      if (actions) actions.style.display = 'flex';
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2]
+      });
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`perenti-ticket-${ticketId}.pdf`);
+    } catch (e) {
+      console.error("Failed to generate PDF", e);
+      alert("Failed to download PDF ticket.");
+    }
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>;
+    return (
+      <div className="dashboard-page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div className="spinner" style={{
+            width: '40px', height: '40px', border: '4px solid var(--border-card)', 
+            borderTop: '4px solid var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'
+          }}></div>
+          <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Loading your passes...</p>
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="dashboard-page-wrapper">
       <main className="dashboard-main-content" id="print-area-wrapper">
-        {/* Success Banner (handled by Toast in React, omitted from here) */}
 
         {/* Announcements Banner */}
         {announcement && (
@@ -101,53 +216,32 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {/* Available Events */}
-        <div className="hub-header-row" style={{marginBottom: '1rem'}}>
-          <div className="hub-title-section">
-            <h1>Available Events</h1>
-            <p>Discover and register for upcoming events and meetups.</p>
-          </div>
-        </div>
-        
-        <div id="available-events-container" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem'}}>
-          {events.length === 0 ? (
-            <div style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>No upcoming events found.</div>
-          ) : (
-            events.map((evt) => {
-              const dateStr = evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA';
-              const capacityStr = evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited';
-              return (
-                <div key={evt.id} style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                  {evt.bannerUrl && (
-                    <div style={{width: '100%', height: '140px', borderRadius: '0.5rem', overflow: 'hidden', marginBottom: '0.25rem'}}>
-                      <img src={evt.bannerUrl} style={{width: '100%', height: '100%', objectFit: 'cover'}} alt="Event Banner" />
-                    </div>
-                  )}
-                  <h4 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>{evt.name || 'Untitled Event'}</h4>
-                  <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    {dateStr}
-                  </div>
-                  <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    Capacity: {capacityStr}
-                  </div>
-                  <div style={{marginTop: '0.5rem'}}>
-                    <Link to={`/?eventId=${evt.id}`} className="btn btn-primary btn-sm" style={{width: '100%', textAlign: 'center', display: 'block', textDecoration: 'none'}}>View & Book</Link>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
         <div className="hub-header-row">
           <div className="hub-title-section">
             <h1>My Tickets Hub</h1>
             <p>Review your registration passes. Present the QR codes at the venue entrance.</p>
           </div>
           {tickets.length > 0 && (
-            <button type="button" className="btn btn-primary" onClick={handlePrint}>
+            <button type="button" className="btn btn-primary" onClick={handlePrint} style={{ 
+              padding: '0.75rem 1.5rem', 
+              fontSize: '1rem', 
+              fontWeight: 600, 
+              whiteSpace: 'nowrap', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: '0.6rem', 
+              borderRadius: '0.5rem', 
+              boxShadow: '0 4px 6px rgba(90, 154, 142, 0.2)',
+              border: 'none',
+              cursor: 'pointer',
+              height: 'fit-content'
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
               Print All Tickets
             </button>
           )}
@@ -155,18 +249,29 @@ export default function UserDashboard() {
 
         {/* Empty View */}
         {tickets.length === 0 ? (
-          <div className="empty-tickets-view" id="hub-empty-state">
-            <svg className="empty-graphic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <div className="empty-tickets-view" id="hub-empty-state" style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '5rem 2rem', backgroundColor: 'var(--bg-card)', border: '1px dashed var(--divider)',
+            borderRadius: '1rem', marginTop: '1.5rem', textAlign: 'center', boxShadow: 'var(--shadow-sm)'
+          }}>
+            <svg className="empty-graphic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                 style={{ width: '72px', height: '72px', color: 'var(--text-muted)', opacity: 0.6, marginBottom: '1.5rem' }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <h3>No passes found</h3>
-            <p>You haven't booked any passes for the Ebc 28th Meetup yet.</p>
-            <Link to="/" className="btn btn-primary">Find Event & Book Passes</Link>
+            <h3 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: 'var(--text-main)', fontFamily: "'Outfit', sans-serif" }}>No passes found</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 0 1.5rem 0', lineHeight: 1.5 }}>
+              You haven't booked any passes yet. Browse available events to get started.
+            </p>
+            <Link to="/" className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(90, 154, 142, 0.2)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Browse Events
+            </Link>
           </div>
         ) : (
+<<<<<<< HEAD
           <div id="grouped-tickets-container">
             {/* ✅ updated: Grouped tickets by event and mapped into separate sections */}
             {Object.entries(
@@ -227,6 +332,85 @@ export default function UserDashboard() {
                                 <span>perenti pass</span>
                               </div>
                               <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
+=======
+          <div className="tickets-scroll-container" id="hub-tickets-container">
+            {tickets.map((t, idx) => {
+              // Look up the event this ticket belongs to
+              let event = t.eventId ? eventsMap[t.eventId] : null;
+              if (!event && t.eventId === 'main') {
+                event = {
+                  name: 'Ebc 28th Meetup (Default)',
+                  startDate: '2026-06-14T09:00',
+                  venue: { name: 'Birch Cafe', address: 'Vanasthalipuram, Hyderabad' }
+                };
+              }
+
+              // Fallback event name: use stored eventName field, or 'Unknown Event'
+              const eventName = event?.name || t.eventName || 'Unknown Event';
+              const dateStr = getDateStr(event);
+              const timeStr = getTimeStr(event);
+              const venueStr = getVenueStr(event?.venue);
+
+              let statusText = 'Unused';
+              let statusClass = 'unused';
+              let statusStyle = {};
+
+              if (t.status === 'checked-in') {
+                statusText = 'Checked In';
+                statusClass = 'checked-in';
+              } else if (t.approval === 'pending') {
+                statusText = 'Pending Approval';
+                statusClass = 'pending';
+                statusStyle = { backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#fef3c7', border: '1px solid rgba(245, 158, 11, 0.4)' };
+              } else if (t.approval === 'rejected') {
+                statusText = 'Rejected';
+                statusClass = 'rejected';
+                statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.4)' };
+              }
+
+              const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.id)}`;
+              const paymentText = t.payment === 'online' ? 'Paid (Online)' : 'Offline Payment';
+              const paymentColor = t.payment === 'online' ? '#10b981' : '#d97706';
+
+              return (
+                <div key={t.id} className="print-ticket-page">
+                  <div className="ticket-stub-container" id={`ticket-${t.id}`}>
+                    <div className="ticket-stub-header">
+                      <div className="stub-brand-logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '1.2rem', height: '1.2rem', color: '#ffffff'}}>
+                          <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+                          <path d="M2 17L12 22L22 17"/>
+                        </svg>
+                        <span>perenti pass</span>
+                      </div>
+                      <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
+                    </div>
+
+                    <div className="ticket-stub-main">
+                      <h4 className="stub-event-title">{eventName}</h4>
+                      <div className="stub-event-grid">
+                        <p className="stub-event-meta"><strong>Date:</strong> {dateStr}</p>
+                        {timeStr && <p className="stub-event-meta"><strong>Time:</strong> {timeStr}</p>}
+                        {venueStr && <p className="stub-event-meta"><strong>Venue:</strong> {venueStr}</p>}
+                      </div>
+
+                      <div className="stub-user-info">
+                        <p><strong>Attendee:</strong> <span>{t.email}</span></p>
+                        <p><strong>Ticket ID:</strong> <span className="monospaced-code">{t.id}</span></p>
+                        <p><strong>Pass:</strong> <span>{idx + 1} of {tickets.length}</span></p>
+                        <p><strong>Payment Status:</strong> <span style={{color: paymentColor, fontWeight: 600}}>{paymentText}</span></p>
+                      </div>
+
+                      {t.answers && Object.keys(t.answers).length > 0 && (
+                        <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
+                          <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
+                          {Object.entries(t.answers)
+                            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                            .map(([key, value]) => (
+                            <div key={key} style={{marginBottom: '0.5rem'}}>
+                              <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
+                              <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
                             </div>
                             
                             <div className="ticket-stub-main">
@@ -269,8 +453,36 @@ export default function UserDashboard() {
                             </div>
                           </div>
                         </div>
+<<<<<<< HEAD
                       );
                     })}
+=======
+                      )}
+                    </div>
+
+                    <div className="ticket-stub-cut-divider">
+                      <div className="cut-left"></div>
+                      <div className="cut-line"></div>
+                      <div className="cut-right"></div>
+                    </div>
+
+                    <div className="ticket-stub-qr">
+                      <img src={qrUrl} alt="Ticket QR Code" className="stub-qr-code-img" />
+                      <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>
+                    </div>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
+                  </div>
+                  
+                  {/* Action Bar (Hidden when printed) */}
+                  <div className="ticket-actions-bar" style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center'}}>
+                    <a href={generateGoogleCalendarUrl(event, eventName)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{flex: '1 1 auto', minWidth: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderColor: '#cbd5e1', color: '#475569', textDecoration: 'none', padding: '0.5rem 1rem'}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      Add to Calendar
+                    </a>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleDownloadPDF(t.id)} style={{flex: '1 1 auto', minWidth: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: '#e2e8f0', color: '#334155', border: 'none', padding: '0.5rem 1rem'}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      Download PDF
+                    </button>
                   </div>
                 </div>
               );
