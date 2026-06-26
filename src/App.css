@@ -2178,6 +2178,11 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
 
+  /* Hide registration answers to keep printed ticket concise */
+  .print-hide-answers {
+    display: none !important;
+  }
+
   /* Print Ticket Pages */
   .print-ticket-page {
     display: block !important;
@@ -2200,6 +2205,8 @@ h1, h2, h3, h4, h5, h6 {
   .ticket-stub-container {
     display: flex !important;
     flex-direction: column !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     border: 2px solid #5A9A8E !important;
     background-color: #ffffff !important;
     margin: 0 auto !important;
