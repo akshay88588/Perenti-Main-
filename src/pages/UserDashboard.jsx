@@ -348,7 +348,7 @@ export default function UserDashboard() {
                               </div>
                               
                               {t.answers && Object.keys(t.answers).length > 0 && (
-                                <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
+                                <div className="print-hide-answers" style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
                                   <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
                                   {Object.entries(t.answers)
                                     .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
