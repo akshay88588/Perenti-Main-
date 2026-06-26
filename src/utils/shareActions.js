@@ -3,7 +3,7 @@ export function handleShareAction(action, showToast, eventName = '', eventId = '
   const shareUrl = slug 
     ? `${window.location.origin}/events/${slug}`
     : (eventId ? `${window.location.origin}/?eventId=${eventId}` : window.location.href);
-  const shareText = `Check out ${eventName || 'this event'} on Perenti! Join other founders & builders:`;
+  const shareText = `✨ You're invited to an exclusive experience! ✨\n\n📌 Event: ${eventName || 'this event'}\n🌐 Hosted on: Perenti\n\nJoin a curated community of founders, creators, and innovators. Don't miss out on the conversations that matter!\n\n🎟️ Reserve your spot here:`;
 
   switch (action) {
     case 'copy':
