@@ -613,6 +613,9 @@ export default function AdminDashboard() {
               <span className="brand-name">perenti</span>
               <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
             </Link>
+            <nav className="header-nav" aria-label="Main navigation">
+              <Link to="/" className="btn btn-secondary btn-sm" id="nav-link-upcoming" style={{ textDecoration: 'none' }}>Upcoming</Link>
+            </nav>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -722,6 +725,31 @@ export default function AdminDashboard() {
             <h3 style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, fontFamily: '"Outfit", sans-serif'}}>Manage Events</h3>
           </div>
           <div className="events-grid" style={{marginTop: 0}}>
+<<<<<<< HEAD
+            {events.length === 0 ? (
+              <div className="event-card">
+                <div className="event-card-banner">
+                  <img src="/ebc_meetup_banner.jpg" alt="Event Banner" />
+                </div>
+                <h4 className="event-card-title">Ebc 28th Meetup (Default)</h4>
+                <div className="event-card-detail">14/06/2026</div>
+                <div className="event-card-detail">Capacity: 60</div>
+                <div className="event-card-actions">
+                  <Link to="/create-event?id=main" className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
+                  {/* ✅ updated */}
+                  <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, textAlign: 'center', borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent('main')}>Delete</button>
+                </div>
+              </div>
+            ) : (
+              events.map(evt => (
+                <div className="event-card" key={evt.id}>
+                  {evt.bannerUrl ? (
+                    <div className="event-card-banner">
+                      <img src={evt.bannerUrl} alt="Event Banner" />
+                    </div>
+                  ) : (
+                    <div className="event-card-banner-placeholder">{/* ❌ removed */}</div>
+=======
             {allEvents.map(evt => {
               const isSelected = selectedEventId === evt.id;
               return (
@@ -754,6 +782,7 @@ export default function AdminDashboard() {
                     }}>
                       ✓ Tracking
                     </span>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
                   )}
                   <div className="event-card-banner">
                     <EventImage 
@@ -767,7 +796,12 @@ export default function AdminDashboard() {
                   <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? `${evt.capacity.maxAttendees} attendees` : 'Unlimited'}</div>
                   <div className="event-card-actions" onClick={e => e.stopPropagation()}>
                     <Link to={`/create-event?id=${evt.id}`} className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
+<<<<<<< HEAD
+                    {/* ✅ updated */}
                     <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, textAlign: 'center', borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
+=======
+                    <button type="button" className="btn btn-danger btn-sm" style={{flex: 1}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
                   </div>
                 </div>
               );
@@ -822,12 +856,21 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+<<<<<<< HEAD
+            <div className="admin-panel-box">
+              <h3 className="admin-panel-title">Send Announcement</h3>
+              <p className="panel-section-subtitle" style={{margin: 0}}>Post an announcement that will be displayed live on the Attendee Tickets Hub.</p>
+              <div className="form-group" style={{margin: 0}}>
+                {/* ✅ updated */}
+                <textarea className="form-control" placeholder="Write announcement here..." value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{width: '100%', minHeight: '80px', fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--border-input)', resize: 'vertical', marginTop: '2rem'}}></textarea>
+=======
             <div className="admin-panel-box" style={{padding: '1rem'}}>
               <div style={{display: 'flex', alignItems: 'center', gap: '0.6rem', borderBottom: '1px solid var(--divider)', paddingBottom: '1rem', marginBottom: '1rem'}}>
                 <div style={{width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(90,154,142,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
                 </div>
                 <h3 className="admin-panel-title" style={{margin: 0}}>Send Announcement</h3>
+>>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
               </div>
               <p className="panel-section-subtitle" style={{marginBottom: '1rem'}}>Post a message that will be displayed live on the Attendee Tickets Hub.</p>
               <div style={{marginBottom: '0.5rem'}}>
