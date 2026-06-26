@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { collection, query, where, getDocs, doc, onSnapshot } from "firebase/firestore";
 import { db } from '../config/firebase';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 export default function UserDashboard() {
   const { session } = useAuth();
@@ -105,6 +107,66 @@ export default function UserDashboard() {
     if (parts.length === 0) return null;
     const time = parts.join(' - ');
     return event.timezone ? `${time} (${event.timezone})` : time;
+  };
+
+  const generateGoogleCalendarUrl = (event, fallbackName) => {
+    const name = event?.name || fallbackName || 'Upcoming Event';
+    const text = encodeURIComponent(name);
+    
+    let startDate = new Date();
+    let endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour default
+    
+    if (event?.startDate) {
+      startDate = new Date(event.startDate);
+      if (event.startTime) {
+        const timeParts = event.startTime.match(/(\d+):(\d+)(?:\s*(am|pm))?/i);
+        if (timeParts) {
+          let h = parseInt(timeParts[1]);
+          const m = parseInt(timeParts[2]);
+          const ampm = timeParts[3]?.toLowerCase();
+          if (ampm === 'pm' && h < 12) h += 12;
+          if (ampm === 'am' && h === 12) h = 0;
+          startDate.setHours(h, m, 0);
+        }
+      }
+      endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
+      if (event.endDate) {
+        endDate = new Date(event.endDate);
+      }
+    }
+
+    const formatGCalDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '');
+    const dates = `${formatGCalDate(startDate)}/${formatGCalDate(endDate)}`;
+    const details = encodeURIComponent(event?.description || 'Join us for this exciting event!');
+    const location = encodeURIComponent(getVenueStr(event?.venue) || '');
+    
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}`;
+  };
+
+  const handleDownloadPDF = async (ticketId) => {
+    const element = document.getElementById(`ticket-${ticketId}`);
+    if (!element) return;
+    try {
+      // Temporarily hide actions bar if it is inside the element
+      const actions = element.querySelector('.ticket-actions-bar');
+      if (actions) actions.style.display = 'none';
+
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
+      
+      if (actions) actions.style.display = 'flex';
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2]
+      });
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`perenti-ticket-${ticketId}.pdf`);
+    } catch (e) {
+      console.error("Failed to generate PDF", e);
+      alert("Failed to download PDF ticket.");
+    }
   };
 
   if (loading) {
@@ -222,7 +284,7 @@ export default function UserDashboard() {
 
               return (
                 <div key={t.id} className="print-ticket-page">
-                  <div className="ticket-stub-container">
+                  <div className="ticket-stub-container" id={`ticket-${t.id}`}>
                     <div className="ticket-stub-header">
                       <div className="stub-brand-logo">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '1.2rem', height: '1.2rem', color: '#ffffff'}}>
@@ -274,6 +336,18 @@ export default function UserDashboard() {
                       <img src={qrUrl} alt="Ticket QR Code" className="stub-qr-code-img" />
                       <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>
                     </div>
+                  </div>
+                  
+                  {/* Action Bar (Hidden when printed) */}
+                  <div className="ticket-actions-bar" style={{display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center'}}>
+                    <a href={generateGoogleCalendarUrl(event, eventName)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderColor: '#cbd5e1', color: '#475569', textDecoration: 'none'}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      Add to Calendar
+                    </a>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleDownloadPDF(t.id)} style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: '#e2e8f0', color: '#334155', border: 'none'}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      Download PDF
+                    </button>
                   </div>
                 </div>
               );
