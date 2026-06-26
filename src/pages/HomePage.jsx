@@ -225,7 +225,7 @@ export default function HomePage() {
 
     return (
       <main className="page-main">
-        <div className="content-wrapper">
+        <div className="content-wrapper" style={{ paddingBottom: '8rem' }}>
           {/* Back button */}
           <button
             onClick={() => navigate('/')}
