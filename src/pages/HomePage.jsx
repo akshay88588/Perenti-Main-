@@ -187,8 +187,15 @@ export default function HomePage() {
     if (eventLoading) {
       return (
         <main className="page-main">
-          <div className="content-wrapper" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-            <p style={{ color: 'var(--text-secondary)' }}>Loading event...</p>
+          <div className="content-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+              <div className="spinner" style={{
+                width: '40px', height: '40px', border: '4px solid var(--border-card)', 
+                borderTop: '4px solid var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'
+              }}></div>
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Loading event...</p>
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
           </div>
         </main>
       );
@@ -480,7 +487,14 @@ export default function HomePage() {
         </div>
 
         {eventsLoading ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Loading events...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', gap: '1rem' }}>
+            <div className="spinner" style={{
+              width: '40px', height: '40px', border: '4px solid var(--border-card)', 
+              borderTop: '4px solid var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'
+            }}></div>
+            <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Loading events...</p>
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          </div>
         ) : events.length === 0 ? (
           <div style={{
             textAlign: 'center', padding: '4rem 2rem',
