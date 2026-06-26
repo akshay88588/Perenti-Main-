@@ -12,6 +12,8 @@ export default function Header() {
     navigate('/');
   };
 
+  console.log("Header location.pathname:", location.pathname);
+
   return (
     <header className="site-header">
       <div className="header-container">
@@ -20,7 +22,9 @@ export default function Header() {
           <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
         </Link>
 
-        {location.pathname !== '/' && location.pathname !== '/my-tickets' && location.pathname !== '/user-dashboard' && (
+        {location.pathname !== '/' && 
+         !location.pathname.startsWith('/my-tickets') && 
+         !location.pathname.startsWith('/user-dashboard') && (
           <nav className="header-nav" aria-label="Main navigation">
             <Link to="/" className="header-nav-link" id="nav-link-upcoming">Upcoming</Link>
           </nav>
