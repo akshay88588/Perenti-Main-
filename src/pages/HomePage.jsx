@@ -375,8 +375,8 @@ export default function HomePage() {
                 ) : (
                   <p style={{ color: 'var(--text-secondary)' }}>No additional description provided.</p>
                 )}
-                <div className="details-cta-banner" style={{ marginTop: '2rem' }}>
-                  <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleRegisterClick}>
+                <div className="details-cta-banner">
+                  <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleRegisterClick} style={{boxShadow: '0 8px 20px rgba(90,154,142,0.3)'}}>
                     Register for Event Pass
                   </button>
                 </div>
