@@ -23,7 +23,7 @@ const isValidUrl = (urlString) => {
   if (urlString.startsWith('file://')) {
     return false;
   }
-  if (urlString.startsWith('/') || (!urlString.includes('://') && (urlString.endsWith('.jpg') || urlString.endsWith('.png') || urlString.endsWith('.jpeg') || urlString.endsWith('.webp') || urlString.endsWith('.gif')))) {
+  if (urlString.startsWith('/') || urlString.startsWith('data:') || (!urlString.includes('://') && (urlString.endsWith('.jpg') || urlString.endsWith('.png') || urlString.endsWith('.jpeg') || urlString.endsWith('.webp') || urlString.endsWith('.gif')))) {
     return true;
   }
   try {
