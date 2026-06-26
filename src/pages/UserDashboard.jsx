@@ -167,81 +167,110 @@ export default function UserDashboard() {
             <Link to="/" className="btn btn-primary">Find Event & Book Passes</Link>
           </div>
         ) : (
-          <div className="tickets-scroll-container" id="hub-tickets-container">
-            {tickets.map((t, idx) => {
-              let statusText = 'Unused';
-              let statusClass = 'unused';
-              let statusStyle = {};
-              
-              if (t.status === 'checked-in') {
-                statusText = 'Checked In';
-                statusClass = 'checked-in';
-              } else if (t.approval === 'pending') {
-                statusText = 'Pending Approval';
-                statusClass = 'pending';
-                statusStyle = { backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#fef3c7', border: '1px solid rgba(245, 158, 11, 0.4)' };
-              } else if (t.approval === 'rejected') {
-                statusText = 'Rejected';
-                statusClass = 'rejected';
-                statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.4)' };
-              }
-              
-              const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.id)}`;
-              const paymentText = t.payment === 'online' ? 'Paid (Online)' : 'Offline Payment';
-              const paymentColor = t.payment === 'online' ? '#10b981' : '#d97706';
+          <div id="grouped-tickets-container">
+            {/* ✅ updated: Grouped tickets by event and mapped into separate sections */}
+            {Object.entries(
+              tickets.reduce((groups, ticket) => {
+                const eventId = ticket.eventId || 'default';
+                if (!groups[eventId]) groups[eventId] = [];
+                groups[eventId].push(ticket);
+                return groups;
+              }, {})
+            ).map(([eventId, eventTickets]) => {
+              const eventInfo = events.find(e => e.id === eventId) || {
+                name: 'Ebc 28th Meetup',
+                startDate: '2026-06-14',
+                venue: 'Birch Cafe, Hyderabad',
+              };
+
+              const dateStr = eventInfo.startDate ? new Date(eventInfo.startDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'TBA';
+              const timeStr = eventInfo.time || '9:00 AM - 11:00 AM (Asia/Kolkata)';
+              const venueStr = eventInfo.venue || eventInfo.location || 'Birch Cafe, Hyderabad';
 
               return (
-                <div key={t.id} className="print-ticket-page">
-                  <div className="ticket-stub-container">
-                    <div className="ticket-stub-header">
-                      <div className="stub-brand-logo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '1.2rem', height: '1.2rem', color: '#ffffff'}}>
-                          <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
-                          <path d="M2 17L12 22L22 17"/>
-                        </svg>
-                        <span>perenti pass</span>
-                      </div>
-                      <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
-                    </div>
-                    
-                    <div className="ticket-stub-main">
-                      <h4 className="stub-event-title">Ebc 28th Meetup</h4>
-                      <div className="stub-event-grid">
-                        <p className="stub-event-meta"><strong>Date:</strong> Sunday, June 14, 2026</p>
-                        <p className="stub-event-meta"><strong>Time:</strong> 9:00 AM - 11:00 AM (Asia/Kolkata)</p>
-                        <p className="stub-event-meta"><strong>Venue:</strong> Birch Cafe, Hyderabad</p>
-                      </div>
+                <div key={eventId} className="event-tickets-group" style={{ marginBottom: '3rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-main)', borderBottom: '2px solid var(--border-card)', paddingBottom: '0.5rem' }}>
+                    {eventInfo.name}
+                  </h3>
+                  <div className="tickets-scroll-container" id={`hub-tickets-container-${eventId}`}>
+                    {eventTickets.map((t, idx) => {
+                      let statusText = 'Unused';
+                      let statusClass = 'unused';
+                      let statusStyle = {};
                       
-                      <div className="stub-user-info">
-                        <p><strong>Attendee:</strong> <span>{t.email}</span></p>
-                        <p><strong>Ticket ID:</strong> <span className="monospaced-code">{t.id}</span></p>
-                        <p><strong>Pass:</strong> <span>{idx + 1} of {tickets.length}</span></p>
-                        <p><strong>Payment Status:</strong> <span style={{color: paymentColor, fontWeight: 600}}>{paymentText}</span></p>
-                      </div>
+                      if (t.status === 'checked-in') {
+                        statusText = 'Checked In';
+                        statusClass = 'checked-in';
+                      } else if (t.approval === 'pending') {
+                        statusText = 'Pending Approval';
+                        statusClass = 'pending';
+                        statusStyle = { backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#fef3c7', border: '1px solid rgba(245, 158, 11, 0.4)' };
+                      } else if (t.approval === 'rejected') {
+                        statusText = 'Rejected';
+                        statusClass = 'rejected';
+                        statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.4)' };
+                      }
                       
-                      {t.answers && Object.keys(t.answers).length > 0 && (
-                        <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
-                          <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
-                          {Object.entries(t.answers).map(([key, value]) => (
-                            <div key={key} style={{marginBottom: '0.5rem'}}>
-                              <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
-                              <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
+                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.id)}`;
+                      const paymentText = t.payment === 'online' ? 'Paid (Online)' : 'Offline Payment';
+                      const paymentColor = t.payment === 'online' ? '#10b981' : '#d97706';
+
+                      return (
+                        <div key={t.id} className="print-ticket-page">
+                          <div className="ticket-stub-container">
+                            <div className="ticket-stub-header">
+                              <div className="stub-brand-logo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '1.2rem', height: '1.2rem', color: '#ffffff'}}>
+                                  <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+                                  <path d="M2 17L12 22L22 17"/>
+                                </svg>
+                                <span>perenti pass</span>
+                              </div>
+                              <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
                             </div>
-                          ))}
+                            
+                            <div className="ticket-stub-main">
+                              <h4 className="stub-event-title">{eventInfo.name}</h4>
+                              <div className="stub-event-grid">
+                                <p className="stub-event-meta"><strong>Date:</strong> {dateStr}</p>
+                                <p className="stub-event-meta"><strong>Time:</strong> {timeStr}</p>
+                                <p className="stub-event-meta"><strong>Venue:</strong> {venueStr}</p>
+                              </div>
+                              
+                              <div className="stub-user-info">
+                                <p><strong>Attendee:</strong> <span>{t.email}</span></p>
+                                <p><strong>Ticket ID:</strong> <span className="monospaced-code">{t.id}</span></p>
+                                <p><strong>Pass:</strong> <span>{idx + 1} of {eventTickets.length}</span></p>
+                                <p><strong>Payment Status:</strong> <span style={{color: paymentColor, fontWeight: 600}}>{paymentText}</span></p>
+                              </div>
+                              
+                              {t.answers && Object.keys(t.answers).length > 0 && (
+                                <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
+                                  <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
+                                  {Object.entries(t.answers).map(([key, value]) => (
+                                    <div key={key} style={{marginBottom: '0.5rem'}}>
+                                      <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
+                                      <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="ticket-stub-cut-divider">
+                              <div className="cut-left"></div>
+                              <div className="cut-line"></div>
+                              <div className="cut-right"></div>
+                            </div>
+                            
+                            <div className="ticket-stub-qr">
+                              <img src={qrUrl} alt="Ticket QR Code" className="stub-qr-code-img" />
+                              <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="ticket-stub-cut-divider">
-                      <div className="cut-left"></div>
-                      <div className="cut-line"></div>
-                      <div className="cut-right"></div>
-                    </div>
-                    
-                    <div className="ticket-stub-qr">
-                      <img src={qrUrl} alt="Ticket QR Code" className="stub-qr-code-img" />
-                      <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

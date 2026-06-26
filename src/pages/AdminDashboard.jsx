@@ -463,7 +463,8 @@ export default function AdminDashboard() {
                 <div className="event-card-detail">Capacity: 60</div>
                 <div className="event-card-actions">
                   <Link to="/create-event?id=main" className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
-                  <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent('main')}>Delete</button>
+                  {/* ✅ updated */}
+                  <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, textAlign: 'center', borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent('main')}>Delete</button>
                 </div>
               </div>
             ) : (
@@ -474,14 +475,15 @@ export default function AdminDashboard() {
                       <img src={evt.bannerUrl} alt="Event Banner" />
                     </div>
                   ) : (
-                    <div className="event-card-banner-placeholder">No Image</div>
+                    <div className="event-card-banner-placeholder">{/* ❌ removed */}</div>
                   )}
                   <h4 className="event-card-title">{evt.name || 'Untitled Event'}</h4>
                   <div className="event-card-detail">{evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}</div>
                   <div className="event-card-detail">Capacity: {evt.capacity && evt.capacity.maxAttendees ? evt.capacity.maxAttendees : 'Unlimited'}</div>
                   <div className="event-card-actions">
                     <Link to={`/create-event?id=${evt.id}`} className="btn btn-secondary btn-sm" style={{flex: 1, textAlign: 'center', textDecoration: 'none'}}>Modify</Link>
-                    <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
+                    {/* ✅ updated */}
+                    <button type="button" className="btn btn-outline btn-sm" style={{flex: 1, textAlign: 'center', borderColor: '#ef4444', color: '#ef4444'}} onClick={() => handleDeleteEvent(evt.id)}>Delete</button>
                   </div>
                 </div>
               ))
@@ -542,7 +544,8 @@ export default function AdminDashboard() {
               <h3 className="admin-panel-title">Send Announcement</h3>
               <p className="panel-section-subtitle" style={{margin: 0}}>Post an announcement that will be displayed live on the Attendee Tickets Hub.</p>
               <div className="form-group" style={{margin: 0}}>
-                <textarea className="form-control" placeholder="Write announcement here..." value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{width: '100%', minHeight: '80px', fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--border-input)', resize: 'vertical'}}></textarea>
+                {/* ✅ updated */}
+                <textarea className="form-control" placeholder="Write announcement here..." value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{width: '100%', minHeight: '80px', fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--border-input)', resize: 'vertical', marginTop: '2rem'}}></textarea>
               </div>
               <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement}>Broadcast Announcement</button>
             </div>
