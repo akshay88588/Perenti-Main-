@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
         }
       }
 
-      setMessage('Check your inbox for further instructions.');
+      setMessage('Check your inbox for further instructions. (Also check your spam folder)');
     } catch (err) {
       if (err.code === 'auth/user-not-found' || err.message === 'No account found with this email.') {
         setError('No account found with this email.');
@@ -67,10 +67,11 @@ export default function ForgotPasswordPage() {
           {message && (
             <div className="auth-success-banner" style={{
               background: '#dcfce7', border: '1px solid #86efac', color: '#166534',
-              padding: '0.75rem', borderRadius: '0.5rem', fontSize: '0.9rem',
-              fontWeight: 500, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+              padding: '1rem', borderRadius: '0.5rem', fontSize: '0.9rem',
+              fontWeight: 500, marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+              textAlign: 'left', lineHeight: '1.4'
             }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'1.1rem', height:'1.1rem', flexShrink:0}}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'1.2rem', height:'1.2rem', flexShrink:0, marginTop: '0.1rem'}}>
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>

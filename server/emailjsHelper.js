@@ -1,7 +1,7 @@
 export function compileResetPasswordHtml(resetLink) {
   return `
-    <div style="background-color: #f1f5f9; padding: 20px; font-family: Arial, sans-serif;">
-      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; font-size: 14px; line-height: 1.5; color: #475569; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #f1f5f9; padding: 20px; font-family: Arial, sans-serif; box-sizing: border-box;">
+      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; font-size: 14px; line-height: 1.5; color: #475569; max-width: 600px; margin: 0 auto; box-sizing: border-box;">
         <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px;">
           <h2 style="font-size: 28px; font-weight: 800; color: #0d9488; margin: 0; text-transform: lowercase; letter-spacing: -0.5px;">perenti</h2>
           <p style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 4px 0 0 0; font-weight: bold;">Password Reset</p>
