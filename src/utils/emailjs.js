@@ -1,3 +1,5 @@
+import emailjs from '@emailjs/browser';
+
 export function compileEmailHtml(email, ticketIds, details = {}) {
   const qty = ticketIds.length;
   const eventName = details.eventName || "Ebc 28th Meetup";
@@ -89,23 +91,13 @@ export async function sendEmailJSTicket(email, ticketIds, config, event = null) 
   };
 
   try {
-    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id: config.serviceId,
-        template_id: config.templateId,
-        user_id: config.publicKey,
-        template_params: templateParams
-      })
-    });
-
-    if (response.ok) {
-      console.log("Real ticket email sent successfully via EmailJS.");
-    } else {
-      const errText = await response.text();
-      console.error("EmailJS API responded with error:", errText);
-    }
+    const response = await emailjs.send(
+      config.serviceId,
+      config.templateId,
+      templateParams,
+      config.publicKey
+    );
+    console.log("Real ticket email sent successfully via EmailJS.", response.status, response.text);
   } catch (err) {
     console.error("Failed to send real ticket email via EmailJS:", err);
   }
