@@ -32,16 +32,16 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const eventId = searchParams.get('eventId');
-  const { slug } = useParams();
+  const { eventName, slug } = useParams();
 
   const { ticketsRemaining, updateTicketsRemaining } = useEventSettings();
   const { bookTicketsForUser } = useBookTickets();
 
   useEffect(() => {
-    if (!session && !eventId && !slug) {
+    if (!session && !eventId && !eventName && !slug) {
       navigate('/login');
     }
-  }, [session, eventId, slug, navigate]);
+  }, [session, eventId, eventName, slug, navigate]);
 
   // Events list state
   const [events, setEvents] = useState([]);
@@ -102,7 +102,7 @@ export default function HomePage() {
 
   // When eventId or slug param changes, load that specific event's detail
   useEffect(() => {
-    if (!eventId && !slug) {
+    if (!eventId && !eventName && !slug) {
       setSelectedEvent(null);
       return;
     }
@@ -136,10 +136,18 @@ export default function HomePage() {
               } catch (_) {}
             }
           }
-        } else if (slug) {
+
+          // Redirect to clean /events/:eventName route if we found the event
+          if (foundEvent) {
+            const nameSlug = foundEvent.slug || (foundEvent.name ? generateSlug(foundEvent.name) : foundEvent.id);
+            navigate(`/events/${nameSlug}`, { replace: true });
+            return;
+          }
+        } else if (eventName || slug) {
+          const currentSlug = eventName || slug;
           // Try Firestore by slug
           try {
-            const q = query(collection(db, 'events'), where('slug', '==', slug));
+            const q = query(collection(db, 'events'), where('slug', '==', currentSlug));
             const snap = await getDocs(q);
             if (!snap.empty) {
               const docSnap = snap.docs[0];
@@ -156,7 +164,7 @@ export default function HomePage() {
               snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const generated = data.slug || (data.name ? generateSlug(data.name) : '');
-                if (generated === slug) {
+                if (generated === currentSlug) {
                   foundEvent = { id: docSnap.id, ...data };
                 }
               });
@@ -171,10 +179,23 @@ export default function HomePage() {
               const localList = JSON.parse(localStorage.getItem('events')) || [];
               const localFound = localList.find(e => {
                 const s = e.slug || (e.name ? generateSlug(e.name) : '');
-                return s === slug;
+                return s === currentSlug;
               });
               if (localFound) foundEvent = localFound;
             } catch (_) {}
+          }
+
+          // Fallback check if currentSlug is actually a valid eventId directly (backward compatibility)
+          if (!foundEvent && currentSlug) {
+            try {
+              const docRef = doc(db, 'events', currentSlug);
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                foundEvent = { id: docSnap.id, ...docSnap.data() };
+              }
+            } catch (err) {
+              console.warn("Failed to fetch event by ID fallback:", err);
+            }
           }
         }
 
@@ -207,7 +228,7 @@ export default function HomePage() {
       }
     };
     loadEventDetail();
-  }, [eventId, slug, events]);
+  }, [eventId, eventName, slug, events, navigate]);
 
   const handleRegisterClick = () => {
     if (session) {
@@ -244,7 +265,7 @@ export default function HomePage() {
   };
 
   // ─── EVENT DETAIL VIEW ────────────────────────────────────────────────────
-  if (eventId || slug) {
+  if (eventId || eventName || slug) {
     if (eventLoading) {
       return (
         <main className="page-main">
@@ -523,7 +544,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <AuthChoiceModal show={showAuthChoice} onClose={() => setShowAuthChoice(false)} qty={qty} eventId={eventId} eventName={selectedEvent?.name} />
+        <AuthChoiceModal show={showAuthChoice} onClose={() => setShowAuthChoice(false)} qty={qty} eventId={selectedEvent?.id || eventId} eventName={selectedEvent?.name} />
         <CheckoutLoginModal show={showCheckoutLogin} onClose={() => setShowCheckoutLogin(false)} qty={qty} onLoginSuccess={() => { setShowCheckoutLogin(false); setShowQuestions(true); }} />
         <RegistrationQuestionsModal show={showQuestions} onClose={() => setShowQuestions(false)} onSubmit={handleQuestionsSubmit} eventDetails={selectedEvent} />
         <RegistrationSummaryModal show={showSummary} onClose={() => setShowSummary(false)} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} eventTicketPrice={selectedEvent?.ticketPrice ?? null} />
@@ -585,7 +606,7 @@ export default function HomePage() {
               return (
                 <div
                   key={evt.id}
-                  onClick={() => navigate(evt.slug ? `/event/${evt.slug}` : `/?eventId=${evt.id}`)}
+                  onClick={() => navigate(`/events/${evt.slug || (evt.name ? generateSlug(evt.name) : evt.id)}`)}
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-card)',
@@ -638,7 +659,7 @@ export default function HomePage() {
                       <button
                         className="btn btn-primary btn-sm"
                         style={{ width: '100%', textAlign: 'center' }}
-                        onClick={e => { e.stopPropagation(); navigate(evt.slug ? `/event/${evt.slug}` : `/?eventId=${evt.id}`); }}
+                        onClick={e => { e.stopPropagation(); navigate(`/events/${evt.slug || (evt.name ? generateSlug(evt.name) : evt.id)}`); }}
                       >
                         View & Book
                       </button>

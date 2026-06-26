@@ -4,6 +4,15 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import EventImage from '../components/EventImage';
 
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +94,7 @@ export default function EventsPage() {
               return (
                 <div
                   key={evt.id}
-                  onClick={() => navigate(`/event?eventId=${evt.id}`)}
+                  onClick={() => navigate(`/events/${evt.slug || (evt.name ? generateSlug(evt.name) : evt.id)}`)}
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-card)',
@@ -144,7 +153,7 @@ export default function EventsPage() {
                       <button
                         className="btn btn-primary btn-sm"
                         style={{ width: '100%', textAlign: 'center' }}
-                        onClick={e => { e.stopPropagation(); navigate(`/event?eventId=${evt.id}`); }}
+                        onClick={e => { e.stopPropagation(); navigate(`/events/${evt.slug || (evt.name ? generateSlug(evt.name) : evt.id)}`); }}
                       >
                         View & Book
                       </button>

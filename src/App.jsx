@@ -26,8 +26,10 @@ function AppContent() {
     <>
       {!hideGlobalHeader && <Header />}
       <Routes>
-        {/* Homepage: events list OR event detail (via ?eventId= or /event/:slug) */}
+        {/* Homepage: events list OR event detail (via ?eventId= or /events/:eventName) */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/events/:eventName" element={<HomePage />} />
+        {/* Keep legacy route for backward compatibility */}
         <Route path="/event/:slug" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

@@ -1,7 +1,7 @@
 export function handleShareAction(action, showToast, eventName = '', eventId = '', eventSlug = '') {
   const slug = eventSlug || (eventName ? eventName.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '') : '');
   const shareUrl = slug 
-    ? `${window.location.origin}/event/${slug}`
+    ? `${window.location.origin}/events/${slug}`
     : (eventId ? `${window.location.origin}/?eventId=${eventId}` : window.location.href);
   const shareText = `Check out ${eventName || 'this event'} on Perenti! Join other founders & builders:`;
 
