@@ -112,10 +112,18 @@ export default function HomePage() {
           console.warn("Failed to fetch event detail from Firestore, trying fallback:", firestoreErr);
         }
 
-        // Fallback: check already-loaded events list
+        // Fallback: check already-loaded events list or localStorage directly
         if (!foundEvent) {
           const found = events.find(e => e.id === eventId);
-          if (found) foundEvent = found;
+          if (found) {
+            foundEvent = found;
+          } else {
+            try {
+              const localList = JSON.parse(localStorage.getItem('events')) || [];
+              const localFound = localList.find(e => e.id === eventId);
+              if (localFound) foundEvent = localFound;
+            } catch (_) {}
+          }
         }
 
         setSelectedEvent(foundEvent);
