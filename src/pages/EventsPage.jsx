@@ -4,6 +4,8 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import EventImage from '../components/EventImage';
 import { Helmet } from 'react-helmet';
+import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet';
 
 function generateSlug(name) {
   return name
@@ -70,7 +72,7 @@ export default function EventsPage() {
   }
 
   return (
-    <main className="page-main">
+    <motion.main className="page-main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
       <Helmet>
         <title>All Events - Perenti</title>
         <meta name="description" content="Browse and register for upcoming events and meetups on Perenti." />
@@ -117,12 +119,16 @@ export default function EventsPage() {
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
             gap: '1.5rem'
           }}>
-            {events.map((evt) => {
+            {events.map((evt, index) => {
               const dateStr = evt.startDate ? new Date(evt.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBA';
               const capacity = evt.capacity?.maxAttendees ?? 'Unlimited';
               return (
-                <div
+                <motion.div
                   key={evt.id}
+                  className="hover-lift"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 + index * 0.05 }}
                   onClick={() => navigate(`/events/${evt.slug || (evt.name ? generateSlug(evt.name) : evt.id)}`)}
                   style={{
                     background: 'var(--bg-card)',
@@ -188,12 +194,12 @@ export default function EventsPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         )}
       </div>
-    </main>
+    </motion.main>
   );
 }

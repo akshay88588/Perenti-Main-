@@ -6,6 +6,7 @@ import { db } from '../config/firebase';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Helmet } from 'react-helmet';
+import { motion } from 'framer-motion';
 
 export default function UserDashboard() {
   const { session } = useAuth();
@@ -208,7 +209,7 @@ export default function UserDashboard() {
         <title>My Tickets - Perenti</title>
         <meta name="description" content="View and manage your registered event tickets on Perenti." />
       </Helmet>
-      <main className="dashboard-main-content" id="print-area-wrapper">
+      <motion.main className="dashboard-main-content" id="print-area-wrapper" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
 
         {/* Announcements Banner */}
         {announcement && (
@@ -425,7 +426,7 @@ export default function UserDashboard() {
             })()}
           </div>
         )}
-      </main>
+      </motion.main>
     </div>
   );
 }
