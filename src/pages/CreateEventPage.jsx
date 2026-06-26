@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { signInAnonymously } from "firebase/auth";
 import { db, storage, auth } from '../config/firebase';
@@ -70,6 +70,50 @@ const compressImage = (file, maxWidth = 800, maxHeight = 600) => {
     reader.onerror = (err) => reject(err);
   });
 };
+export function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // remove special chars
+    .replace(/[\s_]+/g, '-')  // replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // remove leading/trailing hyphens
+}
+
+async function getUniqueSlug(name, editId) {
+  const baseSlug = generateSlug(name);
+  let slug = baseSlug;
+  let counter = 1;
+  
+  const checkExists = async (testSlug) => {
+    if (db) {
+      try {
+        const q = query(collection(db, 'events'), where('slug', '==', testSlug));
+        const snap = await getDocs(q);
+        let foundConflict = false;
+        snap.forEach(d => {
+          if (d.id !== editId) {
+            foundConflict = true;
+          }
+        });
+        if (foundConflict) return true;
+      } catch (err) {
+        console.warn("Failed to check slug uniqueness in Firestore:", err);
+      }
+    }
+    try {
+      const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+      const conflict = localEvents.some(e => e.slug === testSlug && e.id !== editId);
+      if (conflict) return true;
+    } catch (_) {}
+    return false;
+  };
+
+  while (await checkExists(slug)) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  return slug;
+}
 
 export default function CreateEventPage() {
   const { session } = useAuth();
@@ -309,8 +353,11 @@ export default function CreateEventPage() {
 
       // customRegistrationFields state is saved directly in eventData
 
+      const uniqueSlug = await getUniqueSlug(formData.name.trim(), editId);
+
       const eventData = {
         name: formData.name.trim(),
+        slug: uniqueSlug,
         description: formData.description.trim(),
         bannerUrl: finalBannerUrl || '',
         category: formData.category,

@@ -26,8 +26,9 @@ function AppContent() {
     <>
       {!hideGlobalHeader && <Header />}
       <Routes>
-        {/* Homepage: events list OR event detail (via ?eventId=) */}
+        {/* Homepage: events list OR event detail (via ?eventId= or /event/:slug) */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/event/:slug" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/signup" element={<SignupPage />} />
