@@ -246,6 +246,30 @@ export default function HomePage() {
     };
     loadEventDetail();
   }, [eventId, eventName, slug, events, navigate]);
+  // Update SEO metadata when an event is selected or deselected
+  useEffect(() => {
+    if (selectedEvent) {
+      document.title = `${selectedEvent.name} | Perenti`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", selectedEvent.description || `Join ${selectedEvent.name} on Perenti.`);
+      
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute("content", `${selectedEvent.name} | Perenti`);
+      
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute("content", selectedEvent.description || `Join ${selectedEvent.name} on Perenti.`);
+    } else {
+      document.title = "Perenti | The Platform for Community Builders";
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", "Perenti is the ultimate platform for community builders. Create, manage, and host premium events effortlessly.");
+      
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute("content", "Perenti | The Platform for Community Builders");
+      
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute("content", "Perenti is the ultimate platform for community builders. Create, manage, and host premium events effortlessly.");
+    }
+  }, [selectedEvent]);
 
   const handleRegisterClick = () => {
     if (session) {

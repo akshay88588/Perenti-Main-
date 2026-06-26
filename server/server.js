@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 import { sendPasswordResetEmailJS } from './emailjsHelper.js';
 
 // Load .env from the root of the project
@@ -158,6 +159,56 @@ app.post('/api/forgot-password', async (req, res) => {
 
 // Serve static files from the React frontend app
 app.use(express.static(path.join(__dirname, '../dist')));
+
+// Generate dynamic sitemap
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+    
+    // Only fetch active events if Firebase is properly configured
+    let events = [];
+    if (getApps().length > 0) {
+      const db = getFirestore();
+      const snapshot = await db.collection('events').get(); // Assuming active events don't have a status field or filter needed
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.status !== 'archived') {
+          events.push({
+            id: doc.id,
+            slug: data.slug || (data.name ? data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : doc.id)
+          });
+        }
+      });
+    }
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>`;
+
+    events.forEach(evt => {
+      xml += `
+  <url>
+    <loc>${baseUrl}/events/${evt.slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    });
+
+    xml += `\n</urlset>`;
+    
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error("Error generating sitemap:", error);
+    res.status(500).send("Error generating sitemap");
+  }
+});
 
 // SPA fallback: serve index.html for all non-API routes
 app.use((req, res, next) => {
