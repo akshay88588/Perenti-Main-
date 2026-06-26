@@ -271,9 +271,8 @@ export default function UserDashboard() {
             </Link>
           </div>
         ) : (
-<<<<<<< HEAD
           <div id="grouped-tickets-container">
-            {/* ✅ updated: Grouped tickets by event and mapped into separate sections */}
+            {/* ✅ Grouped tickets by event and mapped into separate sections */}
             {Object.entries(
               tickets.reduce((groups, ticket) => {
                 const eventId = ticket.eventId || 'default';
@@ -282,20 +281,21 @@ export default function UserDashboard() {
                 return groups;
               }, {})
             ).map(([eventId, eventTickets]) => {
-              const eventInfo = events.find(e => e.id === eventId) || {
-                name: 'Ebc 28th Meetup',
-                startDate: '2026-06-14',
-                venue: 'Birch Cafe, Hyderabad',
+              const eventInfo = eventsMap[eventId] || {
+                name: 'Ebc 28th Meetup (Default)',
+                startDate: '2026-06-14T09:00',
+                venue: { name: 'Birch Cafe', address: 'Vanasthalipuram, Hyderabad' }
               };
 
-              const dateStr = eventInfo.startDate ? new Date(eventInfo.startDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'TBA';
-              const timeStr = eventInfo.time || '9:00 AM - 11:00 AM (Asia/Kolkata)';
-              const venueStr = eventInfo.venue || eventInfo.location || 'Birch Cafe, Hyderabad';
+              const eventName = eventInfo.name || 'Unknown Event';
+              const dateStr = getDateStr(eventInfo);
+              const timeStr = getTimeStr(eventInfo);
+              const venueStr = getVenueStr(eventInfo.venue || eventInfo.location);
 
               return (
                 <div key={eventId} className="event-tickets-group" style={{ marginBottom: '3rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-main)', borderBottom: '2px solid var(--border-card)', paddingBottom: '0.5rem' }}>
-                    {eventInfo.name}
+                    {eventName}
                   </h3>
                   <div className="tickets-scroll-container" id={`hub-tickets-container-${eventId}`}>
                     {eventTickets.map((t, idx) => {
@@ -321,8 +321,8 @@ export default function UserDashboard() {
                       const paymentColor = t.payment === 'online' ? '#10b981' : '#d97706';
 
                       return (
-                        <div key={t.id} className="print-ticket-page">
-                          <div className="ticket-stub-container">
+                        <div key={t.id} className="print-ticket-page" style={{ marginBottom: '1.5rem' }}>
+                          <div className="ticket-stub-container" id={`ticket-${t.id}`}>
                             <div className="ticket-stub-header">
                               <div className="stub-brand-logo">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '1.2rem', height: '1.2rem', color: '#ffffff'}}>
@@ -332,93 +332,14 @@ export default function UserDashboard() {
                                 <span>perenti pass</span>
                               </div>
                               <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
-=======
-          <div className="tickets-scroll-container" id="hub-tickets-container">
-            {tickets.map((t, idx) => {
-              // Look up the event this ticket belongs to
-              let event = t.eventId ? eventsMap[t.eventId] : null;
-              if (!event && t.eventId === 'main') {
-                event = {
-                  name: 'Ebc 28th Meetup (Default)',
-                  startDate: '2026-06-14T09:00',
-                  venue: { name: 'Birch Cafe', address: 'Vanasthalipuram, Hyderabad' }
-                };
-              }
-
-              // Fallback event name: use stored eventName field, or 'Unknown Event'
-              const eventName = event?.name || t.eventName || 'Unknown Event';
-              const dateStr = getDateStr(event);
-              const timeStr = getTimeStr(event);
-              const venueStr = getVenueStr(event?.venue);
-
-              let statusText = 'Unused';
-              let statusClass = 'unused';
-              let statusStyle = {};
-
-              if (t.status === 'checked-in') {
-                statusText = 'Checked In';
-                statusClass = 'checked-in';
-              } else if (t.approval === 'pending') {
-                statusText = 'Pending Approval';
-                statusClass = 'pending';
-                statusStyle = { backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#fef3c7', border: '1px solid rgba(245, 158, 11, 0.4)' };
-              } else if (t.approval === 'rejected') {
-                statusText = 'Rejected';
-                statusClass = 'rejected';
-                statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.4)' };
-              }
-
-              const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.id)}`;
-              const paymentText = t.payment === 'online' ? 'Paid (Online)' : 'Offline Payment';
-              const paymentColor = t.payment === 'online' ? '#10b981' : '#d97706';
-
-              return (
-                <div key={t.id} className="print-ticket-page">
-                  <div className="ticket-stub-container" id={`ticket-${t.id}`}>
-                    <div className="ticket-stub-header">
-                      <div className="stub-brand-logo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '1.2rem', height: '1.2rem', color: '#ffffff'}}>
-                          <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
-                          <path d="M2 17L12 22L22 17"/>
-                        </svg>
-                        <span>perenti pass</span>
-                      </div>
-                      <span className={`ticket-status-tag ${statusClass}`} style={statusStyle}>{statusText}</span>
-                    </div>
-
-                    <div className="ticket-stub-main">
-                      <h4 className="stub-event-title">{eventName}</h4>
-                      <div className="stub-event-grid">
-                        <p className="stub-event-meta"><strong>Date:</strong> {dateStr}</p>
-                        {timeStr && <p className="stub-event-meta"><strong>Time:</strong> {timeStr}</p>}
-                        {venueStr && <p className="stub-event-meta"><strong>Venue:</strong> {venueStr}</p>}
-                      </div>
-
-                      <div className="stub-user-info">
-                        <p><strong>Attendee:</strong> <span>{t.email}</span></p>
-                        <p><strong>Ticket ID:</strong> <span className="monospaced-code">{t.id}</span></p>
-                        <p><strong>Pass:</strong> <span>{idx + 1} of {tickets.length}</span></p>
-                        <p><strong>Payment Status:</strong> <span style={{color: paymentColor, fontWeight: 600}}>{paymentText}</span></p>
-                      </div>
-
-                      {t.answers && Object.keys(t.answers).length > 0 && (
-                        <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
-                          <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
-                          {Object.entries(t.answers)
-                            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-                            .map(([key, value]) => (
-                            <div key={key} style={{marginBottom: '0.5rem'}}>
-                              <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
-                              <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
->>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
                             </div>
                             
                             <div className="ticket-stub-main">
-                              <h4 className="stub-event-title">{eventInfo.name}</h4>
+                              <h4 className="stub-event-title">{eventName}</h4>
                               <div className="stub-event-grid">
                                 <p className="stub-event-meta"><strong>Date:</strong> {dateStr}</p>
-                                <p className="stub-event-meta"><strong>Time:</strong> {timeStr}</p>
-                                <p className="stub-event-meta"><strong>Venue:</strong> {venueStr}</p>
+                                {timeStr && <p className="stub-event-meta"><strong>Time:</strong> {timeStr}</p>}
+                                {venueStr && <p className="stub-event-meta"><strong>Venue:</strong> {venueStr}</p>}
                               </div>
                               
                               <div className="stub-user-info">
@@ -431,12 +352,14 @@ export default function UserDashboard() {
                               {t.answers && Object.keys(t.answers).length > 0 && (
                                 <div style={{marginTop: '1rem', borderTop: '1px dashed var(--divider)', paddingTop: '1rem'}}>
                                   <h5 style={{fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)'}}>Registration Answers</h5>
-                                  {Object.entries(t.answers).map(([key, value]) => (
-                                    <div key={key} style={{marginBottom: '0.5rem'}}>
-                                      <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
-                                      <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
-                                    </div>
-                                  ))}
+                                  {Object.entries(t.answers)
+                                    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                                    .map(([key, value]) => (
+                                      <div key={key} style={{marginBottom: '0.5rem'}}>
+                                        <p style={{fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.1rem', textTransform: 'uppercase'}}>{key}</p>
+                                        <p style={{fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 500, margin: 0, wordBreak: 'break-word'}}>{value || '-'}</p>
+                                      </div>
+                                    ))}
                                 </div>
                               )}
                             </div>
@@ -452,37 +375,21 @@ export default function UserDashboard() {
                               <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>
                             </div>
                           </div>
+                          
+                          {/* Action Bar (Hidden when printed) */}
+                          <div className="ticket-actions-bar" style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center'}}>
+                            <a href={generateGoogleCalendarUrl(eventInfo, eventName)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{flex: '1 1 auto', minWidth: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderColor: '#cbd5e1', color: '#475569', textDecoration: 'none', padding: '0.5rem 1rem'}}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                              Add to Calendar
+                            </a>
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleDownloadPDF(t.id)} style={{flex: '1 1 auto', minWidth: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: '#e2e8f0', color: '#334155', border: 'none', padding: '0.5rem 1rem'}}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                              Download PDF
+                            </button>
+                          </div>
                         </div>
-<<<<<<< HEAD
                       );
                     })}
-=======
-                      )}
-                    </div>
-
-                    <div className="ticket-stub-cut-divider">
-                      <div className="cut-left"></div>
-                      <div className="cut-line"></div>
-                      <div className="cut-right"></div>
-                    </div>
-
-                    <div className="ticket-stub-qr">
-                      <img src={qrUrl} alt="Ticket QR Code" className="stub-qr-code-img" />
-                      <span className="qr-code-sub">Present this QR code to the organizer at the venue entrance.</span>
-                    </div>
->>>>>>> 52df18c2b6d931755a323f6830f98a23034d4911
-                  </div>
-                  
-                  {/* Action Bar (Hidden when printed) */}
-                  <div className="ticket-actions-bar" style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center'}}>
-                    <a href={generateGoogleCalendarUrl(event, eventName)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{flex: '1 1 auto', minWidth: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderColor: '#cbd5e1', color: '#475569', textDecoration: 'none', padding: '0.5rem 1rem'}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      Add to Calendar
-                    </a>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleDownloadPDF(t.id)} style={{flex: '1 1 auto', minWidth: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: '#e2e8f0', color: '#334155', border: 'none', padding: '0.5rem 1rem'}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                      Download PDF
-                    </button>
                   </div>
                 </div>
               );
