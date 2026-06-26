@@ -4659,4 +4659,17 @@ body {
   box-shadow: 0 8px 30px rgba(0,0,0,0.15);
   border: 1px solid rgba(255,255,255,0.5);
   margin-top: 2rem;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .details-cta-banner {
+    bottom: 0;
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 1rem 1.5rem 1.5rem 1.5rem; /* extra padding for mobile swipe area */
+  }
 }
