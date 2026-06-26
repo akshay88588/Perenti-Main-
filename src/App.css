@@ -4657,7 +4657,7 @@ body {
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
   padding: 1rem;
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   box-shadow: 0 8px 30px rgba(0,0,0,0.15);
   border: 1px solid rgba(255,255,255,0.5);
   width: 90%;
@@ -4667,16 +4667,9 @@ body {
 
 @media (max-width: 768px) {
   .details-cta-banner {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    width: 100%;
-    max-width: none;
-    border-radius: 1rem 1rem 0 0;
-    border-bottom: none;
-    box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
-    padding: 1rem 1.5rem 1.5rem 1.5rem; /* extra padding for mobile swipe area */
-    margin: 0;
+    bottom: 1rem;
+    width: 95%;
+    border-radius: 1.5rem;
+    padding: 1rem 1.25rem;
   }
 }
