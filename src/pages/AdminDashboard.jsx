@@ -61,8 +61,8 @@ export default function AdminDashboard() {
     navigate('/');
   };
 
-  const [announcement, setAnnouncement] = useState(localStorage.getItem('latestAnnouncement') || '');
-  const [broadcastedAnnouncement, setBroadcastedAnnouncement] = useState(localStorage.getItem('latestAnnouncement') || '');
+  const [announcement, setAnnouncement] = useState('');
+  const [broadcastedAnnouncement, setBroadcastedAnnouncement] = useState('');
   const [events, setEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [usersMap, setUsersMap] = useState({});
@@ -201,6 +201,16 @@ export default function AdminDashboard() {
           } catch (e) {
             console.warn("Failed to fetch users from Firestore:", e);
           }
+
+          try {
+            const annDoc = await getDoc(doc(db, 'settings', 'announcement'));
+            if (annDoc.exists()) {
+              setAnnouncement(annDoc.data().text);
+              setBroadcastedAnnouncement(annDoc.data().text);
+            }
+          } catch (e) {
+            console.warn("Failed to fetch announcement from Firestore:", e);
+          }
         } else {
           eventsList = JSON.parse(localStorage.getItem('events')) || [];
         }
@@ -236,23 +246,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const broadcastAnnouncement = () => {
+  const broadcastAnnouncement = async () => {
     if (!announcement.trim()) {
       alert("Error: Announcement text cannot be empty!");
       return;
     }
     const cleanAnn = announcement.trim();
-    localStorage.setItem('latestAnnouncement', cleanAnn);
-    setBroadcastedAnnouncement(cleanAnn);
-    alert("Announcement broadcasted successfully to all attendees!");
+    try {
+      await setDoc(doc(db, 'settings', 'announcement'), { text: cleanAnn, timestamp: Date.now() });
+      setBroadcastedAnnouncement(cleanAnn);
+      alert("Announcement broadcasted successfully to all attendees!");
+    } catch (e) {
+      console.error("Failed to broadcast announcement:", e);
+      alert("Failed to broadcast announcement.");
+    }
   };
 
-  const deleteAnnouncement = () => {
-    if (!window.confirm("Are you sure you want to delete the active announcement?")) return;
-    localStorage.removeItem('latestAnnouncement');
-    setBroadcastedAnnouncement('');
-    setAnnouncement('');
-    alert("Announcement deleted successfully!");
+  const deleteAnnouncement = async () => {
+    if (!window.confirm("Are you sure you want to delete the current announcement?")) return;
+    try {
+      await deleteDoc(doc(db, 'settings', 'announcement'));
+      setAnnouncement('');
+      setBroadcastedAnnouncement('');
+    } catch (e) {
+      console.error("Failed to delete announcement:", e);
+      alert("Failed to delete announcement.");
+    }
   };
 
   const updateAttendeeApproval = async (tId, newStatus) => {

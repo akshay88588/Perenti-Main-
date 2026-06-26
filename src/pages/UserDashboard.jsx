@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, onSnapshot } from "firebase/firestore";
 import { db } from '../config/firebase';
 
 export default function UserDashboard() {
@@ -18,12 +18,13 @@ export default function UserDashboard() {
       return;
     }
 
-    const checkAnnouncements = () => {
-      const latestAnnouncement = localStorage.getItem('latestAnnouncement');
-      setAnnouncement(latestAnnouncement || '');
-    };
-    checkAnnouncements();
-    const announcementInterval = setInterval(checkAnnouncements, 2000);
+    const unsubAnn = onSnapshot(doc(db, 'settings', 'announcement'), (docSnap) => {
+      if (docSnap.exists()) {
+        setAnnouncement(docSnap.data().text || '');
+      } else {
+        setAnnouncement('');
+      }
+    });
 
     const loadData = async () => {
       try {
@@ -68,7 +69,7 @@ export default function UserDashboard() {
     }, 5000); // reduced to every 5s to avoid hammering Firestore
 
     return () => {
-      clearInterval(announcementInterval);
+      unsubAnn();
       clearInterval(pollInterval);
     };
   }, [session, navigate]);
