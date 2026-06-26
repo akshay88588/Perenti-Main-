@@ -27,11 +27,7 @@ function AppContent() {
       {!hideGlobalHeader && <Header />}
       <Routes>
         {/* Homepage: events list OR event detail (via ?eventId=) */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        } />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/signup" element={<SignupPage />} />

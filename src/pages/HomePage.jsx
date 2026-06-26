@@ -27,6 +27,12 @@ export default function HomePage() {
   const { ticketsRemaining, updateTicketsRemaining } = useEventSettings();
   const { bookTicketsForUser } = useBookTickets();
 
+  useEffect(() => {
+    if (!session && !eventId) {
+      navigate('/login');
+    }
+  }, [session, eventId, navigate]);
+
   // Events list state
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(true);
@@ -96,10 +102,14 @@ export default function HomePage() {
         let foundEvent = null;
 
         // Try Firestore first
-        const docRef = doc(db, 'events', eventId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          foundEvent = { id: docSnap.id, ...docSnap.data() };
+        try {
+          const docRef = doc(db, 'events', eventId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            foundEvent = { id: docSnap.id, ...docSnap.data() };
+          }
+        } catch (firestoreErr) {
+          console.warn("Failed to fetch event detail from Firestore, trying fallback:", firestoreErr);
         }
 
         // Fallback: check already-loaded events list
@@ -108,22 +118,24 @@ export default function HomePage() {
           if (found) foundEvent = found;
         }
 
-
-
         setSelectedEvent(foundEvent);
 
         // Load attendees filtered by this event
-        const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
         const list = [];
-        ticketsSnapshot.forEach((t) => {
-          const data = t.data();
-          if (data.approval !== 'rejected') {
-            // Show attendees for this event, or all if no eventId filter on ticket
-            if (!data.eventId || data.eventId === eventId) {
-              list.push({ id: t.id, ...data });
+        try {
+          const ticketsSnapshot = await getDocs(collection(db, 'tickets'));
+          ticketsSnapshot.forEach((t) => {
+            const data = t.data();
+            if (data.approval !== 'rejected') {
+              // Show attendees for this event, or all if no eventId filter on ticket
+              if (!data.eventId || data.eventId === eventId) {
+                list.push({ id: t.id, ...data });
+              }
             }
-          }
-        });
+          });
+        } catch (ticketsErr) {
+          console.warn("Failed to fetch tickets/attendees (could be guest mode):", ticketsErr);
+        }
         setAttendees(list);
       } catch (err) {
         console.error('Error loading event detail:', err);
@@ -132,7 +144,7 @@ export default function HomePage() {
       }
     };
     loadEventDetail();
-  }, [eventId]);
+  }, [eventId, events]);
 
   const handleRegisterClick = () => {
     if (session) {
@@ -142,7 +154,7 @@ export default function HomePage() {
       }
       setShowQuestions(true);
     } else {
-      setShowAuthChoice(true);
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   };
 
