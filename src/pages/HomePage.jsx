@@ -76,15 +76,32 @@ export default function HomePage() {
         if (db) {
           try {
             const snapshot = await getDocs(collection(db, 'events'));
+            const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
             snapshot.forEach((docSnap) => {
-              list.push({ id: docSnap.id, ...docSnap.data() });
+              const data = docSnap.data();
+              if (data.createdBy && adminEmails.includes(data.createdBy)) {
+                list.push({ id: docSnap.id, ...data });
+              }
             });
+            
+            try {
+              const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+              const filteredLocal = localEvents.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
+              if (localEvents.length !== filteredLocal.length) {
+                localStorage.setItem('events', JSON.stringify(filteredLocal));
+              }
+            } catch (e) {}
+            
           } catch (e) {
             console.warn("Failed to fetch events from Firestore, using localStorage fallback:", e);
-            list = JSON.parse(localStorage.getItem('events')) || [];
+            const localList = JSON.parse(localStorage.getItem('events')) || [];
+            const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
+            list = localList.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
           }
         } else {
-          list = JSON.parse(localStorage.getItem('events')) || [];
+          const localList = JSON.parse(localStorage.getItem('events')) || [];
+          const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
+          list = localList.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
         }
         setEvents(list);
       } catch (err) {

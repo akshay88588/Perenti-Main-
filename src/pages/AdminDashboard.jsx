@@ -155,12 +155,27 @@ export default function AdminDashboard() {
         if (db) {
           try {
             const eventsSnapshot = await getDocs(collection(db, 'events'));
+            const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
             eventsSnapshot.forEach((docSnap) => {
-              eventsList.push({ id: docSnap.id, ...docSnap.data() });
+              const data = docSnap.data();
+              if (data.createdBy && adminEmails.includes(data.createdBy)) {
+                eventsList.push({ id: docSnap.id, ...data });
+              }
             });
+            
+            try {
+              const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+              const filteredLocal = localEvents.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
+              if (localEvents.length !== filteredLocal.length) {
+                localStorage.setItem('events', JSON.stringify(filteredLocal));
+              }
+            } catch (e) {}
+
           } catch (e) {
             console.warn("Failed to fetch events from Firestore, using localStorage fallback:", e);
-            eventsList = JSON.parse(localStorage.getItem('events')) || [];
+            const localList = JSON.parse(localStorage.getItem('events')) || [];
+            const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
+            eventsList = localList.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
           }
 
           try {
@@ -194,7 +209,9 @@ export default function AdminDashboard() {
             console.warn("Failed to fetch announcement from Firestore:", e);
           }
         } else {
-          eventsList = JSON.parse(localStorage.getItem('events')) || [];
+          const localList = JSON.parse(localStorage.getItem('events')) || [];
+          const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
+          eventsList = localList.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
         }
 
         setEvents(eventsList);
@@ -552,15 +569,16 @@ export default function AdminDashboard() {
   const checked = activeEventTickets.filter(t => t.status === 'checked-in').length;
   const pending = total - checked;
   const activeEvent = allEvents.find(e => e.id === selectedEventId);
-  const defaultTicketPrice = 399;
-  const eventTicketPrice = (activeEvent && activeEvent.ticketPrice != null && activeEvent.ticketPrice >= 0)
-    ? activeEvent.ticketPrice
-    : defaultTicketPrice;
+  const getEventPrice = (evt) => {
+    if (!evt || evt.ticketPrice == null || evt.ticketPrice === '') return 0;
+    return Number(evt.ticketPrice) || 0;
+  };
+
+  const eventTicketPrice = activeEvent ? getEventPrice(activeEvent) : 0;
   const revenue = selectedEventId === 'all'
     ? activeEventTickets.reduce((sum, t) => {
         const evt = allEvents.find(e => e.id === (t.eventId || 'main'));
-        const price = (evt && evt.ticketPrice != null && evt.ticketPrice >= 0) ? evt.ticketPrice : defaultTicketPrice;
-        return sum + price;
+        return sum + getEventPrice(evt);
       }, 0)
     : total * eventTicketPrice;
   const attendanceRate = total > 0 ? ((checked / total) * 100).toFixed(1) : '0';
@@ -602,9 +620,7 @@ export default function AdminDashboard() {
               <span className="brand-name">perenti</span>
               <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
             </Link>
-            <nav className="header-nav" aria-label="Main navigation">
-              <Link to="/" className="btn btn-secondary btn-sm" id="nav-link-upcoming" style={{ textDecoration: 'none' }}>Upcoming</Link>
-            </nav>
+
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>

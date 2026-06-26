@@ -23,9 +23,24 @@ export default function EventsPage() {
       try {
         const snapshot = await getDocs(collection(db, 'events'));
         const list = [];
+        const adminEmails = ['admin@perenti.com', 'akshayvarmabudigam2006@gmail.com'];
+        
         snapshot.forEach((docSnap) => {
-          list.push({ id: docSnap.id, ...docSnap.data() });
+          const data = docSnap.data();
+          if (data.createdBy && adminEmails.includes(data.createdBy)) {
+            list.push({ id: docSnap.id, ...data });
+          }
         });
+        
+        // Clean up local storage dummy events
+        try {
+          const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+          const filteredLocal = localEvents.filter(e => e.createdBy && adminEmails.includes(e.createdBy));
+          if (localEvents.length !== filteredLocal.length) {
+            localStorage.setItem('events', JSON.stringify(filteredLocal));
+          }
+        } catch (e) {}
+        
         setEvents(list);
       } catch (err) {
         console.error('Error loading events:', err);

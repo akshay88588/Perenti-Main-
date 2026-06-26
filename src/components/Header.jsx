@@ -22,13 +22,6 @@ export default function Header() {
           <span className="brand-tagline">Smart Events, Seamless Outcomes</span>
         </Link>
 
-        {location.pathname !== '/' && 
-         !location.pathname.startsWith('/my-tickets') && 
-         !location.pathname.startsWith('/user-dashboard') && (
-          <nav className="header-nav" aria-label="Main navigation">
-            <Link to="/" className="header-nav-link" id="nav-link-upcoming">Upcoming</Link>
-          </nav>
-        )}
 
         <div className="header-actions" id="header-session-actions">
           {!session && (
