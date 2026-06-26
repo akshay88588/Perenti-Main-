@@ -120,9 +120,12 @@ export default function CheckoutLoginModal({ show, onClose, qty, onLoginSuccess 
                 value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="form-group" style={{margin: 0}}>
-              <label className="form-label" htmlFor="checkout-password">Password</label>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <label className="form-label" htmlFor="checkout-password" style={{marginBottom: 0}}>Password</label>
+                <a href="/forgot-password" onClick={(e) => { e.preventDefault(); onClose(); navigate('/forgot-password'); }} style={{fontSize: '0.8rem', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 500}}>Forgot password?</a>
+              </div>
               <input type="password" id="checkout-password" className="form-control" placeholder="Enter your password"
-                value={password} onChange={(e) => setPassword(e.target.value)} required />
+                value={password} onChange={(e) => setPassword(e.target.value)} required style={{marginTop: '0.5rem'}} />
             </div>
             <button type="submit" className="btn btn-primary btn-block btn-lg" id="btn-checkout-login" disabled={loading}>
               {loading ? 'Logging in...' : 'Login & Continue'}

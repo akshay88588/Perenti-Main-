@@ -9,6 +9,7 @@ import SignupPage from './pages/SignupPage';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateEventPage from './pages/CreateEventPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { isConfigured } from './config/firebase';
 
 import './App.css';
@@ -32,6 +33,7 @@ function AppContent() {
           </ProtectedRoute>
         } />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
         {/* My Tickets — only shows user's booked tickets */}

@@ -84,7 +84,8 @@ export async function sendEmailJSTicket(email, ticketIds, config, event = null) 
     event_time: eventTime,
     event_venue: eventVenue,
     ticket_details: ticketIds.map((id, i) => `Pass ${i + 1} of ${ticketIds.length}: ${id}`).join('\n'),
-    email_html: compileEmailHtml(email, ticketIds, { eventName, eventDate, eventTime, eventVenue })
+    email_html: compileEmailHtml(email, ticketIds, { eventName, eventDate, eventTime, eventVenue }),
+    subject: `Booking Confirmation for ${eventName}`
   };
 
   try {

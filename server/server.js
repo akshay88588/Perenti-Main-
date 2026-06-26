@@ -5,6 +5,9 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { sendPasswordResetEmailJS } from './emailjsHelper.js';
 
 // Load .env from the root of the project
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +17,26 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Initialize Firebase Admin
+const serviceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+};
+
+if (serviceAccount.projectId && serviceAccount.privateKey) {
+  try {
+    initializeApp({
+      credential: cert(serviceAccount)
+    });
+    console.log("Firebase Admin initialized successfully.");
+  } catch (err) {
+    console.error("Firebase Admin initialization error:", err);
+  }
+} else {
+  console.warn("WARNING: Firebase Admin is not initialized because credentials are missing in .env");
+}
 
 // Verify keys exist
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -89,6 +112,47 @@ app.post('/api/verify-payment', (req, res) => {
   } catch (error) {
     console.error("Signature verification error:", error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
+ * Endpoint to send custom forgot password email via EmailJS
+ */
+app.post('/api/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    if (!getApps().length) {
+      return res.status(500).json({ error: 'Firebase Admin is not configured. Please use standard flow or configure credentials.' });
+    }
+
+    // Generate secure reset link via Firebase Admin
+    const resetLink = await getAuth().generatePasswordResetLink(email);
+
+    // EmailJS Configuration
+    const emailConfig = {
+      serviceId: process.env.VITE_EMAILJS_SERVICE_ID || 'service_perenti',
+      templateId: process.env.VITE_EMAILJS_TEMPLATE_ID || 'template_perenti_ticket',
+      publicKey: process.env.VITE_EMAILJS_PUBLIC_KEY || 'your_public_key'
+    };
+
+    // Send using our helper
+    const success = await sendPasswordResetEmailJS(email, resetLink, emailConfig);
+
+    if (success) {
+      res.json({ success: true, message: 'Password reset email sent successfully' });
+    } else {
+      res.status(500).json({ error: 'Failed to send password reset email via EmailJS' });
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    if (error.code === 'auth/user-not-found') {
+      return res.status(404).json({ error: 'auth/user-not-found' });
+    }
+    res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 });
 

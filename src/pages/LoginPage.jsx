@@ -66,38 +66,27 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (email === 'admin@perenti.com') {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await handleSuccessfulLogin(userCredential.user.email);
+    } catch (loginError) {
+      if (email.endsWith('@perenti.com')) {
         try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           await handleSuccessfulLogin(userCredential.user.email);
-        } catch (authError) {
-          try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await handleSuccessfulLogin(userCredential.user.email);
-          } catch (createError) {
-            console.warn("Admin authentication & creation failed. Falling back to unauthenticated bypass.");
-            await handleSuccessfulLogin(email);
-          }
-        }
-      } else {
-        try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          await handleSuccessfulLogin(userCredential.user.email);
-        } catch (loginError) {
-          if (email.endsWith('@perenti.com')) {
-            try {
-              const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-              await handleSuccessfulLogin(userCredential.user.email);
-            } catch (createError) {
-              setError(loginError.message);
-            }
+        } catch (createError) {
+          if (loginError.code === 'auth/invalid-credential' || loginError.code === 'auth/wrong-password') {
+            setError("Incorrect password. Please try again.");
           } else {
             setError(loginError.message);
           }
         }
+      } else {
+        if (loginError.code === 'auth/invalid-credential' || loginError.code === 'auth/wrong-password') {
+          setError("Incorrect password. Please try again.");
+        } else {
+          setError(loginError.message);
+        }
       }
-    } catch (err) {
-      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -144,9 +133,12 @@ export default function LoginPage() {
                 value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="form-group">
-              <label htmlFor="login-password" className="form-label">Password</label>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <label htmlFor="login-password" className="form-label" style={{marginBottom: 0}}>Password</label>
+                <Link to="/forgot-password" style={{fontSize: '0.8rem', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 500}}>Forgot password?</Link>
+              </div>
               <input type="password" id="login-password" className="form-control" required placeholder="••••••••"
-                value={password} onChange={(e) => setPassword(e.target.value)} />
+                value={password} onChange={(e) => setPassword(e.target.value)} style={{marginTop: '0.5rem'}} />
             </div>
             <button type="submit" className="btn btn-primary btn-block btn-lg" style={{marginTop: '1rem'}} disabled={loading}>
               {loading ? 'Logging in...' : 'Log In'}
