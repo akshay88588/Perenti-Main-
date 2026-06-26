@@ -61,7 +61,8 @@ export default function AdminDashboard() {
     navigate('/');
   };
 
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState(localStorage.getItem('latestAnnouncement') || '');
+  const [broadcastedAnnouncement, setBroadcastedAnnouncement] = useState(localStorage.getItem('latestAnnouncement') || '');
   const [events, setEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [usersMap, setUsersMap] = useState({});
@@ -240,9 +241,18 @@ export default function AdminDashboard() {
       alert("Error: Announcement text cannot be empty!");
       return;
     }
-    localStorage.setItem('latestAnnouncement', announcement.trim());
-    setAnnouncement('');
+    const cleanAnn = announcement.trim();
+    localStorage.setItem('latestAnnouncement', cleanAnn);
+    setBroadcastedAnnouncement(cleanAnn);
     alert("Announcement broadcasted successfully to all attendees!");
+  };
+
+  const deleteAnnouncement = () => {
+    if (!window.confirm("Are you sure you want to delete the active announcement?")) return;
+    localStorage.removeItem('latestAnnouncement');
+    setBroadcastedAnnouncement('');
+    setAnnouncement('');
+    alert("Announcement deleted successfully!");
   };
 
   const updateAttendeeApproval = async (tId, newStatus) => {
@@ -803,9 +813,20 @@ export default function AdminDashboard() {
                 />
                 <p style={{fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.35rem 0 0 0', textAlign: 'right'}}>{announcement.length} characters</p>
               </div>
-              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement} style={{width: '100%'}}>
+              <button type="button" className="btn btn-primary btn-block btn-lg" onClick={broadcastAnnouncement} style={{width: '100%', marginBottom: broadcastedAnnouncement ? '0.75rem' : '0'}}>
                 📢 Broadcast Announcement
               </button>
+
+              {broadcastedAnnouncement && (
+                <button 
+                  type="button" 
+                  className="btn btn-block btn-lg" 
+                  onClick={deleteAnnouncement} 
+                  style={{ width: '100%', backgroundColor: '#ef4444', color: 'white', border: 'none' }}
+                >
+                  🗑️ Delete Announcement
+                </button>
+              )}
             </div>
 
             <div className="admin-panel-box" style={{display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem'}}>
