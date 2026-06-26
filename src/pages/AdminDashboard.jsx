@@ -5,6 +5,7 @@ import { collection, doc, getDocs, getDoc, updateDoc, deleteDoc, setDoc } from "
 import { db } from '../config/firebase';
 import jsQR from 'jsqr';
 import EventImage from '../components/EventImage';
+import { Helmet } from 'react-helmet';
 
 // Helper function to format check-in timestamps to uniform hh:mm:ss am/pm
 const formatCheckInTime = (timestamp) => {
@@ -613,6 +614,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="dashboard-page-wrapper">
+      <Helmet>
+        <title>Admin Dashboard - Perenti</title>
+        <meta name="description" content="Manage events, registrations, and scan tickets on the Perenti Admin Dashboard." />
+      </Helmet>
       <main className="admin-main-content">
         <div className="admin-top-nav-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--divider)', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>

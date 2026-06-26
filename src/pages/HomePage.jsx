@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEventSettings } from '../hooks/useEventSettings';
 import { useBookTickets } from '../hooks/useBookTickets';
+import { Helmet } from 'react-helmet';
 
 // Modals
 import AuthChoiceModal from '../components/modals/AuthChoiceModal';
@@ -348,6 +349,10 @@ export default function HomePage() {
 
     return (
       <main className="page-main">
+        <Helmet>
+          <title>{evt.name || 'Event Details'} - Perenti</title>
+          <meta name="description" content={evt.description || `Register for ${evt.name} on Perenti.`} />
+        </Helmet>
         <div className="content-wrapper" style={{ paddingBottom: '8rem' }}>
           {/* Back button */}
           <button
@@ -599,14 +604,35 @@ export default function HomePage() {
   // ─── EVENTS LISTING VIEW (default homepage) ───────────────────────────────
   return (
     <main className="page-main">
+      <Helmet>
+        <title>Perenti - Discover Incredible Events</title>
+        <meta name="description" content="Discover and register for upcoming events, meetups, and networking opportunities on Perenti." />
+      </Helmet>
       <div className="content-wrapper">
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontFamily: '"Outfit", sans-serif', fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-            Available Events
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Discover and register for upcoming events and meetups.
-          </p>
+        {/* Dynamic Hero Section */}
+        <div style={{ 
+          marginBottom: '3rem', 
+          padding: '3.5rem 2rem', 
+          borderRadius: '1rem',
+          background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))',
+          color: '#ffffff',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-md)'
+        }}>
+          {/* Abstract SVG Background element for flair */}
+          <svg style={{ position: 'absolute', top: 0, right: 0, opacity: 0.1, transform: 'scale(1.5) translate(10%, -10%)', pointerEvents: 'none' }} width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#ffffff" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,97.7,-2.1C98.6,13.8,94.5,30,86.1,43.6C77.7,57.1,65,68.1,50.7,74.9C36.4,81.7,20.5,84.3,4.3,83.9C-11.9,83.4,-27.8,79.9,-42.1,72.7C-56.4,65.5,-69.1,54.6,-77.6,41.4C-86.1,28.2,-90.4,12.7,-89.8,-2.4C-89.2,-17.5,-83.7,-32.2,-74.6,-44C-65.5,-55.8,-52.8,-64.7,-39.3,-71.5C-25.8,-78.3,-11.5,-83,-2.3,-79.8C6.9,-76.6,22.2,-65.5,30.6,-83.6C30.6,-83.6,44.7,-76.4,44.7,-76.4Z" transform="translate(100 100)" />
+          </svg>
+          
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <h1 style={{ fontFamily: '"Outfit", sans-serif', fontSize: '2.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.75rem', letterSpacing: '-0.03em' }}>
+              Discover Incredible Events
+            </h1>
+            <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '1.1rem', maxWidth: '600px', lineHeight: 1.5 }}>
+              Join vibrant communities, expand your network, and unlock unforgettable experiences at upcoming events near you.
+            </p>
+          </div>
         </div>
 
         {eventsLoading ? (
@@ -620,18 +646,27 @@ export default function HomePage() {
           </div>
         ) : events.length === 0 ? (
           <div style={{
-            textAlign: 'center', padding: '4rem 2rem',
-            background: 'var(--bg-card)', border: '1px solid var(--border-card)',
-            borderRadius: '1rem', color: 'var(--text-muted)'
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '5rem 2rem', background: 'linear-gradient(to bottom right, var(--bg-card), var(--bg-body))', border: '1px solid var(--border-card)',
+            borderRadius: '1rem', textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden'
           }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 1rem', opacity: 0.4 }}>
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
+            <svg style={{ position: 'absolute', top: 0, left: 0, opacity: 0.05, transform: 'scale(2) translate(-20%, -10%)', pointerEvents: 'none' }} width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <path fill="var(--brand-primary)" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,97.7,-2.1C98.6,13.8,94.5,30,86.1,43.6C77.7,57.1,65,68.1,50.7,74.9C36.4,81.7,20.5,84.3,4.3,83.9C-11.9,83.4,-27.8,79.9,-42.1,72.7C-56.4,65.5,-69.1,54.6,-77.6,41.4C-86.1,28.2,-90.4,12.7,-89.8,-2.4C-89.2,-17.5,-83.7,-32.2,-74.6,-44C-65.5,-55.8,-52.8,-64.7,-39.3,-71.5C-25.8,-78.3,-11.5,-83,-2.3,-79.8C6.9,-76.6,22.2,-65.5,30.6,-83.6C30.6,-83.6,44.7,-76.4,44.7,-76.4Z" transform="translate(100 100)" />
             </svg>
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No events available</p>
-            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Check back soon for upcoming events.</p>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(90, 154, 142, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="1.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <h3 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: 'var(--text-main)', fontFamily: "'Outfit', sans-serif" }}>No Events Available</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '400px', margin: '0', lineHeight: 1.5 }}>
+                There are no upcoming events at the moment. Please check back later for new and exciting meetups!
+              </p>
+            </div>
           </div>
         ) : (
           <div style={{
@@ -647,32 +682,26 @@ export default function HomePage() {
               return (
                 <div
                   key={evt.id}
+                  className="hover-lift"
                   onClick={() => navigate(`/events/${evt.slug || (evt.name ? generateSlug(evt.name) : evt.id)}`)}
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-card)',
-                    borderRadius: '0.875rem',
+                    borderRadius: '1rem',
                     overflow: 'hidden',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                     boxShadow: 'var(--shadow-sm)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.1)';
-                    e.currentTarget.style.borderColor = 'var(--brand-primary)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                    e.currentTarget.style.borderColor = 'var(--border-card)';
+                    position: 'relative'
                   }}
                 >
                   {/* Banner */}
-                  <div style={{ width: '100%', height: '180px', flexShrink: 0, overflow: 'hidden', borderRadius: '0.875rem 0.875rem 0 0' }}>
+                  <div style={{ width: '100%', height: '180px', flexShrink: 0, overflow: 'hidden', borderRadius: '1rem 1rem 0 0', position: 'relative' }}>
                     <EventImage src={evt.bannerUrl} alt={evt.name} containerStyle={{ height: '180px' }} />
+                    <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', padding: '0.3rem 0.75rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-main)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                      {evt.ticketPrice != null && evt.ticketPrice > 0 ? `₹${Number(evt.ticketPrice).toLocaleString('en-IN')}` : 'FREE'}
+                    </div>
                   </div>
 
                   {/* Card Body */}

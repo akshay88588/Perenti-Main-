@@ -2,30 +2,53 @@
    CSS Reset & Variables
    ========================================================================== */
 :root {
-  /* Color Palette - Light Mode (Exact specs) */
-  --bg-primary: #FFFFFF;          /* Main Background */
+  /* Color Palette - Light Mode (Enhanced) */
+  --bg-primary: #F9FAFB;          /* Main Background */
   --bg-card: #FFFFFF;
   --border-card: #E5E7EB;         /* Borders & Dividers */
   --text-main: #111827;           /* Primary Text & Headings */
-  --text-secondary: #6B7280;      /* Secondary Text */
+  --text-secondary: #4B5563;      /* Secondary Text */
   --text-muted: #6B7280;          /* Secondary Text */
   
   --brand-primary: #5A9A8E;       /* Primary Accent */
   --brand-primary-hover: #498378; /* Slightly darker accent for hover states */
-  --brand-secondary: #5A9A8E;
-  --brand-secondary-hover: #498378;
+  --brand-secondary: #3B7A70;     /* Deeper teal for gradients */
+  --brand-secondary-hover: #2C655C;
   
   --bg-input: #FFFFFF;
-  --border-input: #E5E7EB;
+  --border-input: #D1D5DB;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   
   --bg-info-card: #F9FAFB;        /* Card/Surface Background */
   --bg-badge: rgba(90, 154, 142, 0.1);
   --text-badge: #5A9A8E;
   
   --divider: #E5E7EB;             /* Borders & Dividers */
+}
+
+/* ==========================================================================
+   Micro-animations & Utilities
+   ========================================================================== */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.hover-lift:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-hover) !important;
+}
+
+/* Shimmer Loader */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.skeleton-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, #f6f7f8 4%, #edeef1 25%, #f6f7f8 36%);
+  background-size: 1000px 100%;
 }
 
 * {
@@ -70,7 +93,9 @@ h1, h2, h3, h4, h5, h6 {
    ========================================================================== */
 .site-header {
   width: 100%;
-  background-color: var(--bg-card);
+  background-color: rgba(255, 255, 255, 0.85); /* Glassmorphism */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--divider);
   position: sticky;
   top: 0;
@@ -2070,8 +2095,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .attendees-table {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
   text-align: left;
 }
 
@@ -2081,27 +2107,36 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .attendees-table th {
-  background-color: var(--bg-info-card);
+  background-color: var(--bg-card);
   color: var(--text-muted);
-  font-weight: 600;
-  padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid var(--border-card);
+  font-weight: 700;
+  padding: 1rem 1.2rem;
+  border-bottom: 2px solid var(--border-card);
   position: sticky;
   top: 0;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  z-index: 10;
 }
 
 .attendees-table td {
-  padding: 0.6rem 0.8rem;
+  padding: 1rem 1.2rem;
   border-bottom: 1px solid var(--border-card);
   color: var(--text-main);
+  background-color: var(--bg-card);
 }
 
 .attendees-table tr:last-child td {
   border-bottom: none;
 }
 
-.attendees-table tbody tr:hover {
-  background-color: rgba(90, 154, 142, 0.03);
+.attendees-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.attendees-table tbody tr:hover td {
+  background-color: var(--bg-info-card);
 }
 
 /* Print Page Wrapper */
@@ -3380,11 +3415,17 @@ body {
 .admin-panel-box {
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   margin-bottom: 1.25rem;
   word-break: break-word; /* Handle long text without spaces */
+  transition: all 0.3s ease;
+}
+
+.admin-panel-box:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(90, 154, 142, 0.2);
 }
 
 .admin-panel-title {

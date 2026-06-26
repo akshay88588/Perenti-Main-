@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import EventImage from '../components/EventImage';
+import { Helmet } from 'react-helmet';
 
 function generateSlug(name) {
   return name
@@ -70,6 +71,10 @@ export default function EventsPage() {
 
   return (
     <main className="page-main">
+      <Helmet>
+        <title>All Events - Perenti</title>
+        <meta name="description" content="Browse and register for upcoming events and meetups on Perenti." />
+      </Helmet>
       <div className="content-wrapper">
         {/* Page Header */}
         <div style={{ marginBottom: '2rem' }}>
@@ -84,18 +89,27 @@ export default function EventsPage() {
         {/* Events Grid */}
         {events.length === 0 ? (
           <div style={{
-            textAlign: 'center', padding: '4rem 2rem',
-            background: 'var(--bg-card)', border: '1px solid var(--border-card)',
-            borderRadius: '1rem', color: 'var(--text-muted)'
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '5rem 2rem', background: 'linear-gradient(to bottom right, var(--bg-card), var(--bg-body))', border: '1px solid var(--border-card)',
+            borderRadius: '1rem', textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden'
           }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 1rem', opacity: 0.4 }}>
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
+            <svg style={{ position: 'absolute', top: 0, left: 0, opacity: 0.05, transform: 'scale(2) translate(-20%, -10%)', pointerEvents: 'none' }} width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <path fill="var(--brand-primary)" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,97.7,-2.1C98.6,13.8,94.5,30,86.1,43.6C77.7,57.1,65,68.1,50.7,74.9C36.4,81.7,20.5,84.3,4.3,83.9C-11.9,83.4,-27.8,79.9,-42.1,72.7C-56.4,65.5,-69.1,54.6,-77.6,41.4C-86.1,28.2,-90.4,12.7,-89.8,-2.4C-89.2,-17.5,-83.7,-32.2,-74.6,-44C-65.5,-55.8,-52.8,-64.7,-39.3,-71.5C-25.8,-78.3,-11.5,-83,-2.3,-79.8C6.9,-76.6,22.2,-65.5,30.6,-83.6C30.6,-83.6,44.7,-76.4,44.7,-76.4Z" transform="translate(100 100)" />
             </svg>
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No events available</p>
-            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Check back soon for upcoming events.</p>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(90, 154, 142, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="1.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <h3 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: 'var(--text-main)', fontFamily: "'Outfit', sans-serif" }}>No Events Available</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '400px', margin: '0', lineHeight: 1.5 }}>
+                There are no upcoming events at the moment. Please check back later for new and exciting meetups!
+              </p>
+            </div>
           </div>
         ) : (
           <div style={{

@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, doc, onSnapshot } from "firebase/fir
 import { db } from '../config/firebase';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { Helmet } from 'react-helmet';
 
 export default function UserDashboard() {
   const { session } = useAuth();
@@ -203,6 +204,10 @@ export default function UserDashboard() {
 
   return (
     <div className="dashboard-page-wrapper">
+      <Helmet>
+        <title>My Tickets - Perenti</title>
+        <meta name="description" content="View and manage your registered event tickets on Perenti." />
+      </Helmet>
       <main className="dashboard-main-content" id="print-area-wrapper">
 
         {/* Announcements Banner */}
@@ -251,67 +256,93 @@ export default function UserDashboard() {
         {tickets.length === 0 ? (
           <div className="empty-tickets-view" id="hub-empty-state" style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            padding: '5rem 2rem', backgroundColor: 'var(--bg-card)', border: '1px dashed var(--divider)',
-            borderRadius: '1rem', marginTop: '1.5rem', textAlign: 'center', boxShadow: 'var(--shadow-sm)'
+            padding: '5rem 2rem', background: 'linear-gradient(to bottom right, var(--bg-card), var(--bg-body))', border: '1px solid var(--border-card)',
+            borderRadius: '1rem', marginTop: '1.5rem', textAlign: 'center', boxShadow: 'var(--shadow-md)', position: 'relative', overflow: 'hidden'
           }}>
-            <svg className="empty-graphic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-                 style={{ width: '72px', height: '72px', color: 'var(--text-muted)', opacity: 0.6, marginBottom: '1.5rem' }}>
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
+            <svg style={{ position: 'absolute', top: 0, left: 0, opacity: 0.05, transform: 'scale(2) translate(-20%, -10%)', pointerEvents: 'none' }} width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <path fill="var(--brand-primary)" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,97.7,-2.1C98.6,13.8,94.5,30,86.1,43.6C77.7,57.1,65,68.1,50.7,74.9C36.4,81.7,20.5,84.3,4.3,83.9C-11.9,83.4,-27.8,79.9,-42.1,72.7C-56.4,65.5,-69.1,54.6,-77.6,41.4C-86.1,28.2,-90.4,12.7,-89.8,-2.4C-89.2,-17.5,-83.7,-32.2,-74.6,-44C-65.5,-55.8,-52.8,-64.7,-39.3,-71.5C-25.8,-78.3,-11.5,-83,-2.3,-79.8C6.9,-76.6,22.2,-65.5,30.6,-83.6C30.6,-83.6,44.7,-76.4,44.7,-76.4Z" transform="translate(100 100)" />
             </svg>
-            <h3 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: 'var(--text-main)', fontFamily: "'Outfit', sans-serif" }}>No passes found</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 0 1.5rem 0', lineHeight: 1.5 }}>
-              You haven't booked any passes yet. Browse available events to get started.
-            </p>
-        <Link to="/" className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(90, 154, 142, 0.2)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-              Browse Events
-            </Link>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(90, 154, 142, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                <svg className="empty-graphic" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="1.5"
+                    style={{ width: '40px', height: '40px' }}>
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <h3 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: 'var(--text-main)', fontFamily: "'Outfit', sans-serif" }}>No passes found</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 0 2rem 0', lineHeight: 1.5 }}>
+                You haven't booked any passes yet. Browse available events to get started and unlock new experiences.
+              </p>
+              <Link to="/" className="btn btn-primary" style={{ padding: '0.85rem 1.75rem', borderRadius: '2rem', fontWeight: 700, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(90, 154, 142, 0.3)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                Browse Events
+              </Link>
+            </div>
           </div>
         ) : (
           <div id="grouped-tickets-container">
-            {/* ✅ updated: Grouped tickets by event and mapped into separate sections */}
-            {Object.entries(
-              tickets.reduce((groups, ticket) => {
+            {/* ✅ updated: Grouped tickets by Upcoming and Past events */}
+            {(() => {
+              const now = new Date();
+              const upcoming = [];
+              const past = [];
+              
+              tickets.forEach(ticket => {
                 const eventId = ticket.eventId || 'default';
-                if (!groups[eventId]) groups[eventId] = [];
-                groups[eventId].push(ticket);
-                return groups;
-              }, {})
-            ).map(([eventId, eventTickets]) => {
-              const eventInfo = eventsMap[eventId] || {
-                name: 'Unknown Event',
-                startDate: 'TBA'
-              };
+                const eventInfo = eventsMap[eventId];
+                let isPast = false;
+                if (eventInfo) {
+                  let d = eventInfo.endDate ? new Date(eventInfo.endDate) : (eventInfo.startDate ? new Date(eventInfo.startDate) : null);
+                  // Ensure date object is valid
+                  if (d && !isNaN(d.getTime()) && d < now) {
+                    isPast = true;
+                  }
+                }
+                if (isPast) past.push(ticket);
+                else upcoming.push(ticket);
+              });
 
-              const dateStr = getDateStr(eventInfo);
-              const timeStr = getTimeStr(eventInfo);
-              const venueStr = getVenueStr(eventInfo.venue);
-
-              return (
-                <div key={eventId} className="event-tickets-group" style={{ marginBottom: '3rem' }}>
+              return [
+                { title: 'Upcoming Events', data: upcoming, id: 'upcoming' },
+                { title: 'Past Events', data: past, id: 'past' }
+              ].filter(g => g.data.length > 0).map(group => (
+                <div key={group.id} className="event-tickets-group" style={{ marginBottom: '3rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-main)', borderBottom: '2px solid var(--border-card)', paddingBottom: '0.5rem' }}>
-                    {eventInfo.name}
+                    {group.title}
                   </h3>
-                  <div className="tickets-scroll-container" id={`hub-tickets-container-${eventId}`}>
-                    {eventTickets.map((t, idx) => {
+                  <div className="tickets-scroll-container" id={`hub-tickets-container-${group.id}`}>
+                    {group.data.map((t, idx) => {
+                      const eventId = t.eventId || 'default';
+                      const eventInfo = eventsMap[eventId] || {
+                        name: 'Unknown Event',
+                        startDate: 'TBA'
+                      };
+                      const dateStr = getDateStr(eventInfo);
+                      const timeStr = getTimeStr(eventInfo);
+                      const venueStr = getVenueStr(eventInfo.venue);
+
+                      const relatedTickets = group.data.filter(tk => tk.eventId === eventId);
+                      const ticketIndex = relatedTickets.findIndex(tk => tk.id === t.id) + 1;
+
                       let statusText = 'Unused';
                       let statusClass = 'unused';
-                      let statusStyle = {};
+                      let statusStyle = { backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#2563EB', border: '1px solid rgba(59, 130, 246, 0.5)', boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)', fontWeight: 'bold' };
                       
                       if (t.status === 'checked-in') {
                         statusText = 'Checked In';
                         statusClass = 'checked-in';
+                        statusStyle = { backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.5)', boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)', fontWeight: 'bold' };
                       } else if (t.approval === 'pending') {
                         statusText = 'Pending Approval';
                         statusClass = 'pending';
-                        statusStyle = { backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#fef3c7', border: '1px solid rgba(245, 158, 11, 0.4)' };
+                        statusStyle = { backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#D97706', border: '1px solid rgba(245, 158, 11, 0.5)', boxShadow: '0 0 10px rgba(245, 158, 11, 0.3)', fontWeight: 'bold' };
                       } else if (t.approval === 'rejected') {
                         statusText = 'Rejected';
                         statusClass = 'rejected';
-                        statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.4)' };
+                        statusStyle = { backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#DC2626', border: '1px solid rgba(239, 68, 68, 0.5)', boxShadow: '0 0 10px rgba(239, 68, 68, 0.3)', fontWeight: 'bold' };
                       }
                       
                       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.id)}`;
@@ -343,7 +374,7 @@ export default function UserDashboard() {
                               <div className="stub-user-info">
                                 <p><strong>Attendee:</strong> <span>{t.email}</span></p>
                                 <p><strong>Ticket ID:</strong> <span className="monospaced-code">{t.id}</span></p>
-                                <p><strong>Pass:</strong> <span>{idx + 1} of {eventTickets.length}</span></p>
+                                <p><strong>Pass:</strong> <span>{ticketIndex} of {relatedTickets.length}</span></p>
                                 <p><strong>Payment Status:</strong> <span style={{color: paymentColor, fontWeight: 600}}>{paymentText}</span></p>
                               </div>
                               
@@ -390,8 +421,8 @@ export default function UserDashboard() {
                     })}
                   </div>
                 </div>
-              );
-            })}
+              ));
+            })()}
           </div>
         )}
       </main>
