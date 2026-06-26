@@ -110,35 +110,41 @@ export default function UserDashboard() {
   };
 
   const generateGoogleCalendarUrl = (event, fallbackName) => {
-    const name = event?.name || fallbackName || 'Upcoming Event';
+    const name = (event?.name || fallbackName || 'Upcoming Event').trim();
     const text = encodeURIComponent(name);
     
     let startDate = new Date();
     let endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour default
     
     if (event?.startDate) {
-      startDate = new Date(event.startDate);
-      if (event.startTime) {
-        const timeParts = event.startTime.match(/(\d+):(\d+)(?:\s*(am|pm))?/i);
-        if (timeParts) {
-          let h = parseInt(timeParts[1]);
-          const m = parseInt(timeParts[2]);
-          const ampm = timeParts[3]?.toLowerCase();
-          if (ampm === 'pm' && h < 12) h += 12;
-          if (ampm === 'am' && h === 12) h = 0;
-          startDate.setHours(h, m, 0);
+      const parsedStart = new Date(event.startDate);
+      if (!isNaN(parsedStart.getTime())) {
+        startDate = parsedStart;
+        endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
+        if (event.endDate) {
+          const parsedEnd = new Date(event.endDate);
+          if (!isNaN(parsedEnd.getTime())) {
+            endDate = parsedEnd;
+          }
         }
-      }
-      endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
-      if (event.endDate) {
-        endDate = new Date(event.endDate);
       }
     }
 
     const formatGCalDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '');
     const dates = `${formatGCalDate(startDate)}/${formatGCalDate(endDate)}`;
-    const details = encodeURIComponent(event?.description || 'Join us for this exciting event!');
-    const location = encodeURIComponent(getVenueStr(event?.venue) || '');
+    
+    let desc = (event?.description || '').trim();
+    if (!desc) {
+      desc = `Join us for ${name}! Please present your digital pass at the venue.`;
+    }
+    const details = encodeURIComponent(desc);
+    
+    let loc = getVenueStr(event?.venue) || '';
+    loc = loc.trim();
+    if (!loc) {
+      loc = 'TBA';
+    }
+    const location = encodeURIComponent(loc);
     
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}`;
   };
