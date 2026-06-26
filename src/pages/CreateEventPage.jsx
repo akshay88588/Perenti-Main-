@@ -167,26 +167,7 @@ export default function CreateEventPage() {
 
   const loadEventData = async (id) => {
     try {
-      if (id === 'main') {
-        // Default mockup meetup details
-        setFormData({
-          name: "Ebc 28th Meetup (Default)",
-          description: "Join us at the Ebc 28th meetup, where aspiring founders, business owners, professionals, and students can share their stories.",
-          bannerUrl: "ebc_meetup_banner.jpg",
-          category: "Networking",
-          startDate: "2026-06-14T09:00",
-          endDate: "2026-06-14T11:00",
-          registrationDeadline: "",
-          venueName: "Birch Cafe",
-          address: "Vanasthalipuram, Hyderabad",
-          mapsLink: "",
-          maxAttendees: "60",
-          waitlistEnabled: false,
-          ticketPrice: ''
-        });
-        setOriginalBannerUrl("ebc_meetup_banner.jpg");
-        return;
-      }
+
 
       const docSnap = await getDoc(doc(db, 'events', id));
       if (docSnap.exists()) {

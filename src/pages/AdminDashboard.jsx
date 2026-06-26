@@ -74,25 +74,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'checked-in'
   const [selectedEventId, setSelectedEventId] = useState('all');
 
-  const allEvents = [
-    {
-      id: 'main',
-      name: "Ebc 28th Meetup (Default)",
-      description: "Join us at the Ebc 28th meetup, where aspiring founders, business owners, professionals, and students can share their stories.",
-      bannerUrl: "ebc_meetup_banner.jpg",
-      category: "Networking",
-      startDate: "2026-06-14T09:00",
-      endDate: "2026-06-14T11:00",
-      venue: {
-        name: "Birch Cafe",
-        address: "Vanasthalipuram, Hyderabad"
-      },
-      capacity: {
-        maxAttendees: 60
-      }
-    },
-    ...events
-  ];
+  const allEvents = events;
 
   const [manualTicketId, setManualTicketId] = useState('');
 
@@ -239,6 +221,13 @@ export default function AdminDashboard() {
     if (!window.confirm("Are you sure you want to delete this event? This action cannot be undone.")) return;
     try {
       await deleteDoc(doc(db, 'events', eId));
+      try {
+        const localEvents = JSON.parse(localStorage.getItem('events')) || [];
+        const filtered = localEvents.filter(e => e.id !== eId);
+        localStorage.setItem('events', JSON.stringify(filtered));
+      } catch (err) {
+        console.warn("Failed to delete event from local storage:", err);
+      }
       setEvents(events.filter(e => e.id !== eId));
     } catch (e) {
       console.error("Firestore delete failed:", e);

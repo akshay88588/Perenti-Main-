@@ -281,14 +281,10 @@ export default function UserDashboard() {
                 return groups;
               }, {})
             ).map(([eventId, eventTickets]) => {
-              const eventInfo = eventsMap[eventId] || (eventId === 'main' ? {
-                name: 'Ebc 28th Meetup (Default)',
-                startDate: '2026-06-14T09:00',
-                venue: { name: 'Birch Cafe', address: 'Vanasthalipuram, Hyderabad' }
-              } : {
+              const eventInfo = eventsMap[eventId] || {
                 name: 'Unknown Event',
                 startDate: 'TBA'
-              });
+              };
 
               const dateStr = getDateStr(eventInfo);
               const timeStr = getTimeStr(eventInfo);
