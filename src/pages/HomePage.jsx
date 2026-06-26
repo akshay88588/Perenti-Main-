@@ -375,9 +375,17 @@ export default function HomePage() {
                 ) : (
                   <p style={{ color: 'var(--text-secondary)' }}>No additional description provided.</p>
                 )}
-                <div className="details-cta-banner">
-                  <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleRegisterClick} style={{boxShadow: '0 8px 20px rgba(90,154,142,0.3)'}}>
-                    Register for Event Pass
+                <div className="details-cta-banner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.3px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                      {evt.name || 'Event Name'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginTop: '0.2rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {dateStr} &bull; {evt.startTime}{evt.endTime ? ` - ${evt.endTime}` : ''} {evt.timezone ? `(${evt.timezone})` : ''}
+                    </span>
+                  </div>
+                  <button type="button" className="btn btn-primary" onClick={handleRegisterClick} style={{boxShadow: '0 8px 20px rgba(90,154,142,0.3)', borderRadius: '2rem', padding: '0.75rem 1.25rem', whiteSpace: 'nowrap', fontWeight: 700, flexShrink: 0}}>
+                    Register Now
                   </button>
                 </div>
               </div>
