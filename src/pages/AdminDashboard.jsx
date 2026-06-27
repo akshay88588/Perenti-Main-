@@ -891,72 +891,68 @@ export default function AdminDashboard() {
                     onDragEnter={(e) => { dragOverItem.current = idx; e.preventDefault(); }}
                     onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; handleSort(); }}
                     onDragOver={(e) => e.preventDefault()}
-                    style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', cursor: 'grab'}}
+                    style={{background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', cursor: 'grab', width: '100%', boxSizing: 'border-box'}}
                   >
-                    <div className="custom-reg-info" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0}}>
-                      {/* Drag icon placeholder */}
-                      <svg className="custom-reg-drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
+                    {/* Top Section */}
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', width: '100%'}}>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1}}>
+                        {/* Drag icon */}
+                        <svg className="custom-reg-drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
 
-                      <div className="custom-reg-text-container" style={{fontSize: '0.85rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
-                        <div className="custom-reg-label-group" style={{display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap'}}>
-                          <strong className="custom-reg-label" style={{color: 'var(--text-main)'}}>
-                            {q.label.replace(/\s*\([Oo]ptional\)/gi, '')}
-                            {(q.required === true || q.required === 'true') && <span style={{color: '#ef4444', marginLeft: '0.25rem'}}>*</span>}
-                          </strong>
-                          <span className="custom-reg-badge" style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase'}}>{q.type}</span>
-                        </div>
+                        <strong style={{color: 'var(--text-main)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{(q.label || '').replace(/\s*\([Oo]ptional\)/gi, '')}</strong>
+                        <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase', flexShrink: 0}}>{q.type}</span>
                       </div>
+                      <span style={{color: (q.required === true || q.required === 'true') ? '#ef4444' : 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem', flexShrink: 0}}>
+                        ● {(q.required === true || q.required === 'true') ? 'Required' : 'Optional'}
+                      </span>
                     </div>
 
-                    <div className="custom-reg-controls" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0}}>
-                      {/* Mobile friendly Move Up/Down Controls */}
-                      <div className="custom-reg-move-controls" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                        <button type="button" onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === 0 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                        </button>
-                        <button type="button" onClick={() => handleMove(idx, 1)} disabled={idx === formConfig.length - 1} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === formConfig.length - 1 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === formConfig.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </button>
+                    {/* Bottom / Action Section */}
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', width: '100%', borderTop: '1px solid var(--divider)', paddingTop: '0.5rem', flexWrap: 'wrap'}}>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap'}}>
+                        {/* Mobile friendly Move Up/Down Controls */}
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.25rem', alignItems: 'center' }}>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleMove(idx, -1); }} disabled={idx === 0} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === 0 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                          </button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleMove(idx, 1); }} disabled={idx === formConfig.length - 1} style={{ padding: '0.15rem', background: 'transparent', border: 'none', color: idx === formConfig.length - 1 ? 'var(--divider)' : 'var(--text-secondary)', cursor: idx === formConfig.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                          </button>
+                        </div>
+
+                        {/* Required Toggle */}
+                        <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                          <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                            {q.required ? 'Required' : 'Optional'}
+                          </span>
+                          <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
+                            <input
+                              type="checkbox"
+                              checked={!!q.required}
+                              onChange={() => handleToggleRequired(idx)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+
+                        {/* Show on Attendee Profile Toggle */}
+                        <div style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                          <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                            {(q.showOnProfile !== false) ? 'Show on Profile' : 'Private'}
+                          </span>
+                          <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Show on Attendee Profile">
+                            <input
+                              type="checkbox"
+                              checked={q.showOnProfile !== false}
+                              onChange={() => handleToggleShowOnProfile(idx)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
                       </div>
 
-                      {/* Required Toggle Switch */}
-                      <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
-                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}} className="required-text-mobile">
-                          {q.required ? 'Req' : 'Opt'}
-                        </span>
-                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: q.required ? 'var(--brand-primary)' : 'var(--text-secondary)'}} className="required-text-desktop">
-                          {q.required ? 'Required' : 'Optional'}
-                        </span>
-                        <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Required/Optional">
-                          <input
-                            type="checkbox"
-                            checked={!!q.required}
-                            onChange={() => handleToggleRequired(idx)}
-                          />
-                          <span className="toggle-slider"></span>
-                        </label>
-                      </div>
-
-                      {/* Show on Attendee Profile Toggle */}
-                      <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
-                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}} className="required-text-mobile">
-                          {(q.showOnProfile !== false) ? 'Show' : 'Hide'}
-                        </span>
-                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)'}} className="required-text-desktop">
-                          {(q.showOnProfile !== false) ? 'Show on Profile' : 'Private'}
-                        </span>
-                        <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Show on Attendee Profile">
-                          <input
-                            type="checkbox"
-                            checked={q.showOnProfile !== false}
-                            onChange={() => handleToggleShowOnProfile(idx)}
-                          />
-                          <span className="toggle-slider"></span>
-                        </label>
-                      </div>
-
-                      {/* Delete Question */}
-                      <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
+                      {/* Delete button */}
+                      <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem', flexShrink: 0}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                       </button>
                     </div>

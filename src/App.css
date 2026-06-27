@@ -4488,13 +4488,6 @@ body {
   .required-text-mobile {
     display: inline-block !important;
   }
-  appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
-  background-repeat: no-repeat;
-  background-position: right 0.55rem center;
-  background-size: 0.9rem;
-  padding-right: 1.75rem;
-  transition: border-color 0.2s ease;
 }
 
 .rsvp-select:focus {
