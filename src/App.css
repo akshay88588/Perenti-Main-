@@ -4714,3 +4714,75 @@ body {
     padding: 1rem 1.25rem;
   }
 }
+
+/* ==========================================================================
+   Custom Registration Form Responsive UI Desktop Fix
+   ========================================================================== */
+@media (min-width: 769px) {
+  .custom-reg-card {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: unset !important;
+  }
+
+  /* Top row info section: Question text, badge, Required/Optional status */
+  .custom-reg-card > div:nth-of-type(1) {
+    flex: 1 1 300px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  /* Inner wrapper holding the drag handle, label, and type badge */
+  .custom-reg-card > div:nth-of-type(1) > div:nth-of-type(1) {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  /* Correct question text wrapping and alignment */
+  .custom-reg-card > div:nth-of-type(1) > div:nth-of-type(1) > strong {
+    white-space: normal !important;
+    word-break: break-word !important;
+    font-size: 0.85rem !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Action Section (Required Toggle, Show on Profile Toggle, Delete Button) */
+  .custom-reg-card > div:nth-of-type(2) {
+    flex: 0 1 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 1rem !important;
+    width: auto !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Ensure toggles and move buttons don't wrap internally on desktop */
+  .custom-reg-card > div:nth-of-type(2) > div:nth-of-type(1) {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    flex-wrap: nowrap !important;
+  }
+}
