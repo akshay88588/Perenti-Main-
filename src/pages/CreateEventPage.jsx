@@ -143,6 +143,21 @@ export default function CreateEventPage() {
   
   const [bannerFile, setBannerFile] = useState(null);
   const [originalBannerUrl, setOriginalBannerUrl] = useState('');
+  const fileInputRef = React.useRef(null);
+
+  const handleClearFile = () => {
+    setBannerFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleClearUrl = () => {
+    setFormData(prev => ({
+      ...prev,
+      bannerUrl: ''
+    }));
+  };
 
   const [customRegistrationFields, setCustomRegistrationFields] = useState(() => {
     try {
@@ -150,18 +165,18 @@ export default function CreateEventPage() {
       if (stored) return JSON.parse(stored);
     } catch (_) {}
     return [
-      { id: 'q-building', type: 'text', label: 'What are you building?', required: true },
-      { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
-      { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
-      { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
-      { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
-      { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
-      { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
-      { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
+      { id: 'q-building', type: 'text', label: 'What are you building?', required: true, showOnProfile: true },
+      { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true, showOnProfile: true },
+      { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional', showOnProfile: true },
+      { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other', showOnProfile: true },
+      { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false, showOnProfile: true },
+      { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false, showOnProfile: true },
+      { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false, showOnProfile: true },
+      { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false, showOnProfile: true }
     ];
   });
 
-  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true, showOnProfile: true });
 
   const handleAddQuestion = () => {
     if (!newQuestion.label.trim()) {
@@ -175,7 +190,7 @@ export default function CreateEventPage() {
 
     const id = 'q-custom-' + Date.now();
     setCustomRegistrationFields(prev => [...prev, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
-    setNewQuestion({ label: '', type: 'text', options: '', required: true });
+    setNewQuestion({ label: '', type: 'text', options: '', required: true, showOnProfile: true });
   };
 
   const handleDeleteQuestion = (index) => {
@@ -190,6 +205,15 @@ export default function CreateEventPage() {
     setCustomRegistrationFields(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], required: !updated[index].required };
+      return updated;
+    });
+  };
+
+  const handleToggleShowOnProfile = (index) => {
+    setCustomRegistrationFields(prev => {
+      const updated = [...prev];
+      const currentVal = updated[index].showOnProfile !== false;
+      updated[index] = { ...updated[index], showOnProfile: !currentVal };
       return updated;
     });
   };
@@ -281,11 +305,21 @@ export default function CreateEventPage() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    if (name === 'bannerUrl' && value) {
+      setBannerFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setBannerFile(e.target.files[0]);
+      setFormData(prev => ({
+        ...prev,
+        bannerUrl: ''
+      }));
     }
   };
 
@@ -489,8 +523,74 @@ export default function CreateEventPage() {
             <div className="form-group" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem'}}>
               <label className="form-label" style={{fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)'}}>Event Banner (Upload OR URL)</label>
               <div className="responsive-grid-2-col">
-                <input type="file" id="evt-banner-file" className="form-control" accept="image/*" style={{width: '100%', padding: '0.55rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} title="Upload Image" onChange={handleFileChange} />
-                <input type="url" id="evt-banner-url" name="bannerUrl" className="form-control" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} placeholder="Or paste image URL here" value={formData.bannerUrl} onChange={handleChange} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <input 
+                    type="file" 
+                    id="evt-banner-file" 
+                    ref={fileInputRef}
+                    className="form-control" 
+                    accept="image/*" 
+                    style={{width: '100%', padding: '0.55rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} 
+                    title="Upload Image" 
+                    onChange={handleFileChange} 
+                    disabled={!!formData.bannerUrl}
+                  />
+                  {bannerFile && (
+                    <button 
+                      type="button" 
+                      onClick={handleClearFile} 
+                      style={{ 
+                        alignSelf: 'flex-start', 
+                        background: 'none', 
+                        border: 'none', 
+                        color: '#ef4444', 
+                        fontSize: '0.75rem', 
+                        fontWeight: 600, 
+                        cursor: 'pointer', 
+                        padding: '0.25rem 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      ✕ Remove selected file ({bannerFile.name})
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <input 
+                    type="url" 
+                    id="evt-banner-url" 
+                    name="bannerUrl" 
+                    className="form-control" 
+                    style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--border-input)', borderRadius: '0.5rem', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontFamily: '"Inter", sans-serif', fontSize: '0.95rem', outline: 'none'}} 
+                    placeholder="Or paste image URL here" 
+                    value={formData.bannerUrl} 
+                    onChange={handleChange} 
+                    disabled={!!bannerFile}
+                  />
+                  {formData.bannerUrl && (
+                    <button 
+                      type="button" 
+                      onClick={handleClearUrl} 
+                      style={{ 
+                        alignSelf: 'flex-start', 
+                        background: 'none', 
+                        border: 'none', 
+                        color: '#ef4444', 
+                        fontSize: '0.75rem', 
+                        fontWeight: 600, 
+                        cursor: 'pointer', 
+                        padding: '0.25rem 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      ✕ Clear URL
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -631,6 +731,24 @@ export default function CreateEventPage() {
                       </label>
                     </div>
 
+                    {/* Show on Attendee Profile Toggle */}
+                    <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                      <span className="required-text-mobile" style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}}>
+                        {(q.showOnProfile !== false) ? 'Show' : 'Hide'}
+                      </span>
+                      <span className="required-text-desktop" style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)'}}>
+                        {(q.showOnProfile !== false) ? 'Show on Profile' : 'Private'}
+                      </span>
+                      <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Show on Attendee Profile">
+                        <input 
+                          type="checkbox" 
+                          checked={q.showOnProfile !== false} 
+                          onChange={() => handleToggleShowOnProfile(idx)} 
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
                     {/* Delete button */}
                     <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -666,9 +784,16 @@ export default function CreateEventPage() {
                 </div>
               )}
 
-              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0'}}>
-                <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
-                <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Is this question required?</label>
+              <div style={{display: 'flex', gap: '1.5rem', flexWrap: 'wrap', margin: '0.25rem 0'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                  <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                  <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Is this question required?</label>
+                </div>
+
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                  <input type="checkbox" id="fb-new-showonprofile" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.showOnProfile !== false} onChange={e => setNewQuestion({...newQuestion, showOnProfile: e.target.checked})} />
+                  <label htmlFor="fb-new-showonprofile" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Show on Attendee Profile?</label>
+                </div>
               </div>
 
               <button type="button" className="btn btn-secondary btn-sm" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>

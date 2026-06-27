@@ -584,7 +584,7 @@ export default function HomePage() {
         <RegistrationQuestionsModal show={showQuestions} onClose={() => setShowQuestions(false)} onSubmit={handleQuestionsSubmit} eventDetails={selectedEvent} />
         <RegistrationSummaryModal show={showSummary} onClose={() => setShowSummary(false)} qty={qty} setQty={setQty} ticketsRemaining={ticketsRemaining} onCheckout={handleCheckout} eventTicketPrice={selectedEvent?.ticketPrice ?? null} />
         <DigitalTicketModal show={showDigitalTicket} onClose={() => { setShowDigitalTicket(false); navigate('/my-tickets'); }} ticketIds={generatedTicketIds} email={session?.email} eventName={selectedEvent?.name} paymentMethod={lastPaymentMethod} />
-        <AttendeeProfileModal show={selectedAttendee !== null} onClose={() => setSelectedAttendee(null)} attendee={selectedAttendee} />
+        <AttendeeProfileModal show={selectedAttendee !== null} onClose={() => setSelectedAttendee(null)} attendee={selectedAttendee} customQuestions={selectedEvent?.customRegistrationFields} />
         <Toast message={toastMessage} onClose={() => setToastMessage('')} />
       </main>
     );

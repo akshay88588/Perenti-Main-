@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-export default function AttendeeProfileModal({ show, onClose, attendee }) {
+export default function AttendeeProfileModal({ show, onClose, attendee, customQuestions }) {
   // ESC key listener for accessibility
   useEffect(() => {
     if (!show) return;
@@ -33,6 +33,25 @@ export default function AttendeeProfileModal({ show, onClose, attendee }) {
   const instagram = answers['Instagram URL (Optional)'] || answers['Instagram URL'] || answers['instagram'] || '';
   const website = answers['Personal Website (Optional)'] || answers['Personal Website'] || answers['Personal Website URL'] || answers['website'] || '';
   const building = answers['What are you building?'] || answers['building'] || '';
+
+  const isQuestionVisible = (label) => {
+    if (!customQuestions) return true;
+    const q = customQuestions.find(field => {
+      const fLabel = (field.label || '').toLowerCase().trim().replace(/\s*\([Oo]ptional\)/gi, '');
+      const target = label.toLowerCase().trim().replace(/\s*\([Oo]ptional\)/gi, '');
+      return fLabel.includes(target) || target.includes(fLabel);
+    });
+    if (!q) return true;
+    return q.showOnProfile !== false;
+  };
+
+  const showBio = isQuestionVisible('Tell us about yourself') || isQuestionVisible('bio');
+  const showBuilding = isQuestionVisible('What are you building?') || isQuestionVisible('building');
+  const showRole = isQuestionVisible('Role') || isQuestionVisible('role');
+  const showIndustry = isQuestionVisible('Industry') || isQuestionVisible('industry');
+  const showLinkedin = isQuestionVisible('LinkedIn URL') || isQuestionVisible('linkedin');
+  const showInstagram = isQuestionVisible('Instagram URL') || isQuestionVisible('instagram');
+  const showWebsite = isQuestionVisible('Personal Website') || isQuestionVisible('website');
 
   // Helper to ensure URL starts with protocol for external links
   const formatUrl = (url) => {
@@ -95,17 +114,19 @@ export default function AttendeeProfileModal({ show, onClose, attendee }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--divider)', paddingTop: '1.25rem' }}>
             {/* Bio */}
-            <div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
-                Bio
-              </span>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.5', margin: 0 }}>
-                {bio || 'No biography provided.'}
-              </p>
-            </div>
+            {showBio && (
+              <div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
+                  Bio
+                </span>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.5', margin: 0 }}>
+                  {bio || 'No biography provided.'}
+                </p>
+              </div>
+            )}
 
             {/* What are you building */}
-            {building && (
+            {showBuilding && building && (
               <div>
                 <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
                   What I'm Building
@@ -117,33 +138,39 @@ export default function AttendeeProfileModal({ show, onClose, attendee }) {
             )}
 
             {/* Role & Industry in a grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
-                  Role
-                </span>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
-                  {role || 'Not specified'}
-                </p>
+            {(showRole || showIndustry) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {showRole && (
+                  <div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
+                      Role
+                    </span>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
+                      {role || 'Not specified'}
+                    </p>
+                  </div>
+                )}
+                {showIndustry && (
+                  <div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
+                      Industry
+                    </span>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
+                      {industry || 'Not specified'}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
-                  Industry
-                </span>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
-                  {industry || 'Not specified'}
-                </p>
-              </div>
-            </div>
+            )}
 
             {/* Social Links */}
-            {(linkedin || instagram || website) && (
+            {((showLinkedin && linkedin) || (showInstagram && instagram) || (showWebsite && website)) && (
               <div style={{ borderTop: '1px solid var(--divider)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--brand-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
                   Connect
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  {linkedin && (
+                  {showLinkedin && linkedin && (
                     <a 
                       href={formatUrl(linkedin)} 
                       target="_blank" 
@@ -169,7 +196,7 @@ export default function AttendeeProfileModal({ show, onClose, attendee }) {
                       <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>LinkedIn Profile</span>
                     </a>
                   )}
-                  {instagram && (
+                  {showInstagram && instagram && (
                     <a 
                       href={formatUrl(instagram)} 
                       target="_blank" 
@@ -195,7 +222,7 @@ export default function AttendeeProfileModal({ show, onClose, attendee }) {
                       <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Instagram</span>
                     </a>
                   )}
-                  {website && (
+                  {showWebsite && website && (
                     <a 
                       href={formatUrl(website)} 
                       target="_blank" 

@@ -100,7 +100,7 @@ export default function AdminDashboard() {
 
   // Form Builder state
   const [formConfig, setFormConfig] = useState([]);
-  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true });
+  const [newQuestion, setNewQuestion] = useState({ label: '', type: 'text', options: '', required: true, showOnProfile: true });
 
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
@@ -137,14 +137,14 @@ export default function AdminDashboard() {
       setFormConfig(JSON.parse(storedConfig));
     } else {
       setFormConfig([
-        { id: 'q-building', type: 'text', label: 'What are you building?', required: true },
-        { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true },
-        { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional' },
-        { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other' },
-        { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false },
-        { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false },
-        { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false },
-        { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false }
+        { id: 'q-building', type: 'text', label: 'What are you building?', required: true, showOnProfile: true },
+        { id: 'q-about', type: 'textarea', label: 'Tell us about yourself', required: true, showOnProfile: true },
+        { id: 'q-role', type: 'radio', label: 'Role', required: true, options: 'Founder,Student,Investor,Professional', showOnProfile: true },
+        { id: 'q-industry', type: 'select', label: 'Industry', required: true, options: 'Technology,Finance,Healthcare,Education,Other', showOnProfile: true },
+        { id: 'q-linkedin', type: 'text', label: 'LinkedIn URL', required: false, showOnProfile: true },
+        { id: 'q-instagram', type: 'text', label: 'Instagram URL', required: false, showOnProfile: true },
+        { id: 'q-website', type: 'text', label: 'Personal Website URL', required: false, showOnProfile: true },
+        { id: 'q-cofounder', type: 'toggle', label: 'Looking for Co-founder?', required: false, showOnProfile: true }
       ]);
     }
 
@@ -488,7 +488,7 @@ export default function AdminDashboard() {
 
     const id = 'q-custom-' + Date.now();
     setFormConfig([...formConfig, { ...newQuestion, id, label: newQuestion.label.trim(), options: newQuestion.options.trim() }]);
-    setNewQuestion({ label: '', type: 'text', options: '', required: true });
+    setNewQuestion({ label: '', type: 'text', options: '', required: true, showOnProfile: true });
   };
 
   const handleDeleteQuestion = (index) => {
@@ -500,6 +500,13 @@ export default function AdminDashboard() {
   const handleToggleRequired = (index) => {
     const newConfig = [...formConfig];
     newConfig[index] = { ...newConfig[index], required: !newConfig[index].required };
+    setFormConfig(newConfig);
+  };
+
+  const handleToggleShowOnProfile = (index) => {
+    const newConfig = [...formConfig];
+    const currentVal = newConfig[index].showOnProfile !== false;
+    newConfig[index] = { ...newConfig[index], showOnProfile: !currentVal };
     setFormConfig(newConfig);
   };
 
@@ -930,6 +937,24 @@ export default function AdminDashboard() {
                         </label>
                       </div>
 
+                      {/* Show on Attendee Profile Toggle */}
+                      <div className="custom-reg-toggle-wrapper" style={{display: 'flex', alignItems: 'center', gap: '0.35rem'}}>
+                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)', display: 'none'}} className="required-text-mobile">
+                          {(q.showOnProfile !== false) ? 'Show' : 'Hide'}
+                        </span>
+                        <span style={{fontSize: '0.75rem', fontWeight: 600, color: (q.showOnProfile !== false) ? 'var(--brand-primary)' : 'var(--text-secondary)'}} className="required-text-desktop">
+                          {(q.showOnProfile !== false) ? 'Show on Profile' : 'Private'}
+                        </span>
+                        <label className="toggle-switch" style={{display: 'inline-flex', transform: 'scale(0.85)'}} title="Toggle Show on Attendee Profile">
+                          <input
+                            type="checkbox"
+                            checked={q.showOnProfile !== false}
+                            onChange={() => handleToggleShowOnProfile(idx)}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+
                       {/* Delete Question */}
                       <button type="button" className="btn btn-sm" style={{padding: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2', borderRadius: '0.375rem'}} onClick={() => handleDeleteQuestion(idx)} title="Delete Question">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -961,9 +986,15 @@ export default function AdminDashboard() {
                       <input type="text" className="form-control" style={{fontSize: '0.85rem'}} value={newQuestion.options} onChange={e => setNewQuestion({...newQuestion, options: e.target.value})} placeholder="e.g. Vegetarian,Vegan,Gluten-free" />
                     </div>
                   )}
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
-                    <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Required Question</label>
+                  <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap'}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                      <input type="checkbox" id="fb-new-required" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.required} onChange={e => setNewQuestion({...newQuestion, required: e.target.checked})} />
+                      <label htmlFor="fb-new-required" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Required Question</label>
+                    </div>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                      <input type="checkbox" id="fb-new-showonprofile" style={{width: '1rem', height: '1rem', cursor: 'pointer', margin: 0}} checked={newQuestion.showOnProfile !== false} onChange={e => setNewQuestion({...newQuestion, showOnProfile: e.target.checked})} />
+                      <label htmlFor="fb-new-showonprofile" className="form-label" style={{margin: 0, fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer'}}>Show on Attendee Profile</label>
+                    </div>
                   </div>
                   <button type="button" className="btn btn-secondary btn-sm" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'}} onClick={handleAddQuestion}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
