@@ -899,7 +899,7 @@ export default function AdminDashboard() {
                         {/* Drag icon */}
                         <svg className="custom-reg-drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{opacity: 0.4, cursor: 'grab', flexShrink: 0}}><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
 
-                        <strong style={{color: 'var(--text-main)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{(q.label || '').replace(/\s*\([Oo]ptional\)/gi, '')}</strong>
+                        <strong style={{color: 'var(--text-main)', fontSize: '0.85rem', wordBreak: 'break-word'}}>{(q.label || '').replace(/\s*\([Oo]ptional\)/gi, '')}</strong>
                         <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase', flexShrink: 0}}>{q.type}</span>
                       </div>
                       <span style={{color: (q.required === true || q.required === 'true') ? '#ef4444' : 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem', flexShrink: 0}}>

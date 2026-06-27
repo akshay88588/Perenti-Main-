@@ -701,7 +701,7 @@ export default function CreateEventPage() {
                   {/* Top Section */}
                   <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', width: '100%'}}>
                     <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1}}>
-                      <strong style={{color: 'var(--text-main)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{(q.label || '').replace(/\s*\([Oo]ptional\)/g, '')}</strong>
+                      <strong style={{color: 'var(--text-main)', fontSize: '0.85rem', wordBreak: 'break-word'}}>{(q.label || '').replace(/\s*\([Oo]ptional\)/g, '')}</strong>
                       <span style={{fontSize: '0.7rem', background: 'var(--bg-info-card)', color: 'var(--brand-primary)', border: '1px solid rgba(90, 154, 142, 0.2)', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 600, textTransform: 'uppercase', flexShrink: 0}}>{q.type}</span>
                     </div>
                     <span style={{color: (q.required === true || q.required === 'true') ? '#ef4444' : 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.15rem', flexShrink: 0}}>

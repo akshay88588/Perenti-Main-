@@ -4786,3 +4786,8 @@ body {
     flex-wrap: nowrap !important;
   }
 }
+
+/* Prevent labels, badges, and status indicators in custom registration cards from wrapping characters/words */
+.custom-reg-card span {
+  white-space: nowrap !important;
+}
